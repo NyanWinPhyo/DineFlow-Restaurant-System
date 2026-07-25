@@ -1,8 +1,61 @@
 ﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1>Admin Dashboard</h1>
-<p>Welcome, @ViewBag.Username.</p>
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Users</h6>
+                <h2>4</h2>
+            </div>
+        </div>
+    </div>
 
-<a asp-controller="Auth" asp-action="Logout" class="btn btn-danger">Logout</a>
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Orders</h6>
+                <h2>0</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Sales</h6>
+                <h2>$0.00</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Active Role</h6>
+                <h2>Admin</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-white">
+                Quick Actions
+            </div>
+            <div class="card-body">
+                <a asp-controller="Admin" asp-action="Users" class="btn btn-primary me-2">
+                    Manage Users
+                </a>
+
+                <a asp-controller="Admin" asp-action="SalesReport" class="btn btn-outline-primary">
+                    View Sales Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
