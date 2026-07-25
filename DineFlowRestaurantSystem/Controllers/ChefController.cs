@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using DineFlowRestaurantSystem.Helpers;
 
 namespace DineFlowRestaurantSystem.Controllers
 {
@@ -6,7 +7,13 @@ namespace DineFlowRestaurantSystem.Controllers
     {
         public IActionResult Index()
         {
-            ViewBag.Username = HttpContext.Session.GetString("Username");
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
             return View();
         }
     }

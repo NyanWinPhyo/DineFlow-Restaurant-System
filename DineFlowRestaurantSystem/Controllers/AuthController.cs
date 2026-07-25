@@ -49,7 +49,10 @@ namespace DineFlowRestaurantSystem.Controllers
                 _ => RedirectToAction("Index", "Home")
             };
         }
-
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
