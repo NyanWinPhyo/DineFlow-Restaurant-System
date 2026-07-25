@@ -9,12 +9,10 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Helpers\" />
-    <Folder Include="Services\" />
-    <Folder Include="Views\Auth\" />
-    <Folder Include="Views\Admin\" />
-    <Folder Include="Views\Manager\" />
-    <Folder Include="Views\Chef\" />
-    <Folder Include="Views\Customer\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
   </ItemGroup>
 
 </Project>
