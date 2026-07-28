@@ -63,6 +63,7 @@ namespace DineFlowRestaurantSystem.Controllers
             return View();
         }
 
+        [HttpGet]
         public IActionResult Profile()
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
@@ -72,8 +73,59 @@ namespace DineFlowRestaurantSystem.Controllers
                 return RedirectToAction("AccessDenied", "Auth");
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-            return View();
+
+            int currentUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            var profile = _userService.GetAdminProfile(currentUserId);
+
+            if (profile == null)
+            {
+                TempData["ErrorMessage"] = "Admin profile not found.";
+                return RedirectToAction("Index");
+            }
+
+            return View(profile);
         }
+
+        [HttpPost]
+        public IActionResult Profile(AdminProfileViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            int currentUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            if (model.UserID != currentUserId)
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _userService.UpdateAdminProfile(model);
+
+                HttpContext.Session.SetString("Username", model.Username.Trim());
+
+                TempData["SuccessMessage"] = "Profile updated successfully.";
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update profile: " + ex.Message);
+                return View(model);
+            }
+        }
+
         [HttpGet]
         public IActionResult AddUser()
         {
@@ -98,20 +150,12 @@ namespace DineFlowRestaurantSystem.Controllers
                 return RedirectToAction("AccessDenied", "Auth");
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-            
-            if (string.IsNullOrWhiteSpace(model.Password))
-            {
-                ModelState.AddModelError("Password", "Password is required when adding a new user.");
-            }
-            
-            if (model.Role == "Customer" && model.WalletBalance == null)
-            {
-                ModelState.AddModelError("WalletBalance", "Wallet balance is required for customer accounts.");
-            }
 
-            if (model.Role != "Customer")
+            ValidateUserForm(model, false);
+
+            if (!ModelState.IsValid)
             {
-                model.WalletBalance = null;
+                return View(model);
             }
 
             if (!ModelState.IsValid)
@@ -165,15 +209,7 @@ namespace DineFlowRestaurantSystem.Controllers
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
 
-            if (model.Role == "Customer" && model.WalletBalance == null)
-            {
-                ModelState.AddModelError("WalletBalance", "Wallet balance is required for customer accounts.");
-            }
-
-            if (model.Role != "Customer")
-            {
-                model.WalletBalance = null;
-            }
+            ValidateUserForm(model, true);
 
             if (!ModelState.IsValid)
             {
@@ -253,6 +289,54 @@ namespace DineFlowRestaurantSystem.Controllers
             }
 
             return RedirectToAction("Users");
+        }
+        private void ValidateUserForm(UserFormViewModel model, bool isEdit)
+        {
+            string[] validRoles = { "Admin", "Manager", "Chef", "Customer" };
+
+            if (string.IsNullOrWhiteSpace(model.LoginID))
+            {
+                ModelState.AddModelError("LoginID", "Login ID is required.");
+            }
+            else if (_userService.IsLoginIdTaken(model.LoginID, isEdit ? model.UserID : null))
+            {
+                ModelState.AddModelError("LoginID", "This Login ID is already used by another account.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Username))
+            {
+                ModelState.AddModelError("Username", "Username is required.");
+            }
+
+            if (!isEdit && string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError("Password", "Password is required when adding a new user.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Role))
+            {
+                ModelState.AddModelError("Role", "Please select a role.");
+            }
+            else if (!validRoles.Contains(model.Role))
+            {
+                ModelState.AddModelError("Role", "Invalid role selected.");
+            }
+
+            if (model.Role == "Customer")
+            {
+                if (model.WalletBalance == null)
+                {
+                    ModelState.AddModelError("WalletBalance", "Wallet balance is required for customer accounts.");
+                }
+                else if (model.WalletBalance < 0)
+                {
+                    ModelState.AddModelError("WalletBalance", "Wallet balance cannot be negative.");
+                }
+            }
+            else
+            {
+                model.WalletBalance = null;
+            }
         }
     }
 }

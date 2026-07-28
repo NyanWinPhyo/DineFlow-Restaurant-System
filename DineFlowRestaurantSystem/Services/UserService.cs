@@ -461,5 +461,109 @@ namespace DineFlowRestaurantSystem.Services
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
+        public AdminProfileViewModel? GetAdminProfile(int userId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT UserID, LoginID, Username
+        FROM Users
+        WHERE UserID = @userId
+          AND Role = 'Admin'";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new AdminProfileViewModel
+                        {
+                            UserID = Convert.ToInt32(reader["UserID"]),
+                            LoginID = reader["LoginID"].ToString() ?? "",
+                            Username = reader["Username"].ToString() ?? ""
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void UpdateAdminProfile(AdminProfileViewModel model)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            bool isPasswordChanged = !string.IsNullOrWhiteSpace(model.NewPassword);
+
+            string query;
+
+            if (isPasswordChanged)
+            {
+                query = @"
+            UPDATE Users
+            SET Username = @username,
+                PasswordHash = @passwordHash
+            WHERE UserID = @userId
+              AND Role = 'Admin'";
+            }
+            else
+            {
+                query = @"
+            UPDATE Users
+            SET Username = @username
+            WHERE UserID = @userId
+              AND Role = 'Admin'";
+            }
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@username", model.Username.Trim());
+                cmd.Parameters.AddWithValue("@userId", model.UserID);
+
+                if (isPasswordChanged)
+                {
+                    cmd.Parameters.AddWithValue("@passwordHash", model.NewPassword!.Trim());
+                }
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+        public bool IsLoginIdTaken(string loginId, int? excludeUserId = null)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM Users
+        WHERE LoginID = @loginId
+          AND (@excludeUserId IS NULL OR UserID <> @excludeUserId)";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@loginId", loginId.Trim());
+
+                if (excludeUserId == null)
+                {
+                    cmd.Parameters.AddWithValue("@excludeUserId", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@excludeUserId", excludeUserId.Value);
+                }
+
+                conn.Open();
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
     }
 }

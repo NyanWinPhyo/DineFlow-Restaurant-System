@@ -1,7 +1,60 @@
-﻿@{
+﻿@model DineFlowRestaurantSystem.ViewModels.AdminProfileViewModel
+
+@{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Admin Profile";
 }
 
-<h2>Admin Profile</h2>
-<p>This page will allow the admin to update profile details.</p>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="card dashboard-card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Edit Profile</h5>
+    </div>
+
+    <div class="card-body">
+        <form asp-action="Profile" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <input type="hidden" asp-for="UserID" />
+
+            <div class="mb-3">
+                <label asp-for="LoginID" class="form-label"></label>
+                <input asp-for="LoginID" class="form-control" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NewPassword" class="form-label">
+                    New Password <span class="text-muted">(leave blank to keep current password)</span>
+                </label>
+                <input asp-for="NewPassword" class="form-control" />
+                <span asp-validation-for="NewPassword" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Update Profile
+                </button>
+
+                <a asp-controller="Admin" asp-action="Index" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -46,7 +46,7 @@
 
             <div class="mb-3" id="walletGroup">
                 <label asp-for="WalletBalance" class="form-label"></label>
-                <input asp-for="WalletBalance" class="form-control" />
+                <input asp-for="WalletBalance" class="form-control" min="0" step="0.01" />
                 <span asp-validation-for="WalletBalance" class="text-danger"></span>
             </div>
 
