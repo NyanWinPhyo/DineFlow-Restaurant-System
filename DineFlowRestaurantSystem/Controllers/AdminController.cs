@@ -8,10 +8,12 @@ namespace DineFlowRestaurantSystem.Controllers
     public class AdminController : Controller
     {
         private readonly UserService _userService;
+        private readonly MenuService _menuService;
 
-        public AdminController(UserService userService)
+        public AdminController(UserService userService, MenuService menuService)
         {
             _userService = userService;
+            _menuService = menuService;
         }
 
         public IActionResult Index()
@@ -336,6 +338,73 @@ namespace DineFlowRestaurantSystem.Controllers
             else
             {
                 model.WalletBalance = null;
+            }
+        }
+        public IActionResult MenuItems(string? searchTerm)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+
+            var menuItems = _menuService.GetMenuItems(searchTerm);
+
+            return View(menuItems);
+        }
+
+        [HttpGet]
+        public IActionResult AddMenuItem()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var model = new MenuItemFormViewModel
+            {
+                Categories = _menuService.GetActiveCategories()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult AddMenuItem(MenuItemFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!ModelState.IsValid)
+            {
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+
+            int createdByUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _menuService.AddMenuItem(model, createdByUserId);
+                TempData["SuccessMessage"] = "Menu item added successfully.";
+                return RedirectToAction("MenuItems");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to add menu item: " + ex.Message);
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
             }
         }
     }

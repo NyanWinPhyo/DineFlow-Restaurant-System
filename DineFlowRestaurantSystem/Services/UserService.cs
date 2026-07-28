@@ -392,7 +392,7 @@ namespace DineFlowRestaurantSystem.Services
                 if (HasRelatedRecords(conn, "Feedback", "ManagerID", userId))
                     return (false, "This user cannot be deleted because they have manager response records.");
 
-                if (HasRelatedRecords(conn, "MenuItems", "CreatedByChef", userId))
+                if (HasRelatedRecords(conn, "MenuItems", "CreatedByUserID", userId))
                     return (false, "This user cannot be deleted because they created menu items.");
             }
 
