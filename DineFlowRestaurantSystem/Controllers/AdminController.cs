@@ -556,5 +556,93 @@ namespace DineFlowRestaurantSystem.Controllers
                 return View(model);
             }
         }
+
+        [HttpGet]
+        public IActionResult EditMenuCategory(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var category = _menuService.GetCategoryById(id);
+
+            if (category == null)
+            {
+                TempData["ErrorMessage"] = "Menu category not found.";
+                return RedirectToAction("MenuCategories");
+            }
+
+            return View(category);
+        }
+
+        [HttpPost]
+        public IActionResult EditMenuCategory(MenuCategoryFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!string.IsNullOrWhiteSpace(model.CategoryName) &&
+                _menuService.IsCategoryNameTaken(model.CategoryName, model.CategoryID))
+            {
+                ModelState.AddModelError("CategoryName", "This category name already exists.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _menuService.UpdateMenuCategory(model);
+                TempData["SuccessMessage"] = "Menu category updated successfully.";
+                return RedirectToAction("MenuCategories");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update menu category: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        public IActionResult SetMenuCategoryStatus(int id, bool isActive)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            if (!isActive && _menuService.CategoryHasAvailableMenuItems(id))
+            {
+                TempData["ErrorMessage"] = "This category cannot be deactivated while it still has available menu items.";
+                return RedirectToAction("MenuCategories");
+            }
+
+            try
+            {
+                _menuService.SetMenuCategoryStatus(id, isActive);
+
+                TempData["SuccessMessage"] = isActive
+                    ? "Menu category activated successfully."
+                    : "Menu category deactivated successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to update category status: " + ex.Message;
+            }
+
+            return RedirectToAction("MenuCategories");
+        }
     }
 }

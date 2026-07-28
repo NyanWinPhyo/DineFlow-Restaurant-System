@@ -325,5 +325,101 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public MenuCategoryFormViewModel? GetCategoryById(int categoryId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT CategoryID, CategoryName, IsActive
+        FROM MenuCategories
+        WHERE CategoryID = @categoryId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new MenuCategoryFormViewModel
+                        {
+                            CategoryID = Convert.ToInt32(reader["CategoryID"]),
+                            CategoryName = reader["CategoryName"].ToString() ?? "",
+                            IsActive = Convert.ToBoolean(reader["IsActive"])
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void UpdateMenuCategory(MenuCategoryFormViewModel model)
+        {
+            if (model.CategoryID == null)
+                throw new Exception("Category ID is required for update.");
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        UPDATE MenuCategories
+        SET CategoryName = @categoryName,
+            IsActive = @isActive
+        WHERE CategoryID = @categoryId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryName", model.CategoryName.Trim());
+                cmd.Parameters.AddWithValue("@isActive", model.IsActive);
+                cmd.Parameters.AddWithValue("@categoryId", model.CategoryID.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+        public bool CategoryHasAvailableMenuItems(int categoryId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM MenuItems
+        WHERE CategoryID = @categoryId
+          AND IsAvailable = 1";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                conn.Open();
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        public void SetMenuCategoryStatus(int categoryId, bool isActive)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        UPDATE MenuCategories
+        SET IsActive = @isActive
+        WHERE CategoryID = @categoryId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@isActive", isActive);
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

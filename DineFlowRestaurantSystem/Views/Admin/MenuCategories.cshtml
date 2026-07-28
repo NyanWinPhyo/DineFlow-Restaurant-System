@@ -58,6 +58,7 @@
                         <th>Category Name</th>
                         <th>Status</th>
                         <th>Created At</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -80,6 +81,43 @@
                             </td>
 
                             <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Admin"
+                                       asp-action="EditMenuCategory"
+                                       asp-route-id="@category.CategoryID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
+
+                                    @if (category.IsActive)
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="SetMenuCategoryStatus"
+                                              asp-route-id="@category.CategoryID"
+                                              asp-route-isActive="false"
+                                              method="post"
+                                              onsubmit="return confirm('Deactivate this category?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Deactivate
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="SetMenuCategoryStatus"
+                                              asp-route-id="@category.CategoryID"
+                                              asp-route-isActive="true"
+                                              method="post">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                Activate
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>
