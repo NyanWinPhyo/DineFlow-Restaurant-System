@@ -117,6 +117,7 @@ namespace DineFlowRestaurantSystem.Controllers
                 return View(model);
             }
         }
+
         [HttpGet]
         public IActionResult EditUser(int id)
         {
@@ -176,6 +177,44 @@ namespace DineFlowRestaurantSystem.Controllers
                 ModelState.AddModelError("", "Failed to update user: " + ex.Message);
                 return View(model);
             }
+        }
+
+        [HttpPost]
+        public IActionResult DeactivateUser(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int? currentUserId = HttpContext.Session.GetInt32("UserID");
+
+            if (currentUserId == id)
+            {
+                TempData["ErrorMessage"] = "You cannot deactivate your own account.";
+                return RedirectToAction("Users");
+            }
+
+            _userService.SetUserActiveStatus(id, false);
+
+            TempData["SuccessMessage"] = "User deactivated successfully.";
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        public IActionResult ReactivateUser(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            _userService.SetUserActiveStatus(id, true);
+
+            TempData["SuccessMessage"] = "User reactivated successfully.";
+            return RedirectToAction("Users");
         }
     }
 }

@@ -12,6 +12,13 @@
     </div>
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
 <div class="card dashboard-card mb-4">
     <div class="card-body">
         <form asp-controller="Admin" asp-action="Users" method="get" class="row g-2">
@@ -95,12 +102,38 @@
                             </td>
 
                             <td>
-                                <a asp-controller="Admin"
-                                   asp-action="EditUser"
-                                   asp-route-id="@user.UserID"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Edit
-                                </a>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Admin"
+                                       asp-action="EditUser"
+                                       asp-route-id="@user.UserID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
+
+                                    @if (user.IsActive)
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="DeactivateUser"
+                                              asp-route-id="@user.UserID"
+                                              method="post"
+                                              onsubmit="return confirm('Are you sure you want to deactivate this user?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Deactivate
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="ReactivateUser"
+                                              asp-route-id="@user.UserID"
+                                              method="post">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                Reactivate
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

@@ -249,5 +249,24 @@ namespace DineFlowRestaurantSystem.Services
                 }
             }
         }
+        public void SetUserActiveStatus(int userId, bool isActive)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        UPDATE Users
+        SET IsActive = @isActive
+        WHERE UserID = @userId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@isActive", isActive);
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }
