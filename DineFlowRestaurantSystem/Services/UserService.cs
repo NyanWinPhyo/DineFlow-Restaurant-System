@@ -70,5 +70,59 @@ namespace DineFlowRestaurantSystem.Services
 
             return users;
         }
+        public void AddUser(UserFormViewModel model)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string insertUserQuery = @"
+                    INSERT INTO Users (LoginID, Username, PasswordHash, Role, IsActive)
+                    OUTPUT INSERTED.UserID
+                    VALUES (@loginId, @username, @passwordHash, @role, @isActive)";
+
+                        int newUserId;
+
+                        using (SqlCommand cmd = new SqlCommand(insertUserQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@loginId", model.LoginID.Trim());
+                            cmd.Parameters.AddWithValue("@username", model.Username.Trim());
+                            cmd.Parameters.AddWithValue("@passwordHash", model.Password.Trim());
+                            cmd.Parameters.AddWithValue("@role", model.Role);
+                            cmd.Parameters.AddWithValue("@isActive", model.IsActive);
+
+                            newUserId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+
+                        if (model.Role == "Customer")
+                        {
+                            string insertCustomerQuery = @"
+                        INSERT INTO Customers (CustomerID, WalletBalance)
+                        VALUES (@customerId, @walletBalance)";
+
+                            using (SqlCommand cmd = new SqlCommand(insertCustomerQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@customerId", newUserId);
+                                cmd.Parameters.AddWithValue("@walletBalance", model.WalletBalance ?? 0);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }
