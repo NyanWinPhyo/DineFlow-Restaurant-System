@@ -132,6 +132,16 @@
                                                 Reactivate
                                             </button>
                                         </form>
+
+                                        <form asp-controller="Admin"
+                                              asp-action="DeleteUser"
+                                              asp-route-id="@user.UserID"
+                                              method="post"
+                                              onsubmit="return confirm('This will permanently delete the user. This should only be used for mistaken test accounts. Continue?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                Delete
+                                            </button>
+                                        </form>
                                     }
                                 </div>
                             </td>

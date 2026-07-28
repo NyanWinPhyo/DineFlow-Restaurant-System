@@ -216,5 +216,29 @@ namespace DineFlowRestaurantSystem.Controllers
             TempData["SuccessMessage"] = "User reactivated successfully.";
             return RedirectToAction("Users");
         }
+
+        [HttpPost]
+        public IActionResult DeleteUser(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int currentAdminId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _userService.HardDeleteUser(id, currentAdminId);
+                TempData["SuccessMessage"] = "User permanently deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction("Users");
+        }
     }
 }

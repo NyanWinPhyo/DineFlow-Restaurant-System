@@ -268,5 +268,162 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        private bool TableColumnExists(SqlConnection conn, string tableName, string columnName)
+        {
+            string query = @"
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+          AND TABLE_NAME = @tableName
+          AND COLUMN_NAME = @columnName";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@columnName", columnName);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        private bool HasRelatedRecords(SqlConnection conn, string tableName, string columnName, int userId)
+        {
+            if (!TableColumnExists(conn, tableName, columnName))
+                return false;
+
+            string query = $@"
+        SELECT COUNT(*)
+        FROM [{tableName}]
+        WHERE [{columnName}] = @userId";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        public (bool CanDelete, string Message) CanHardDeleteUser(int userId, int currentAdminId)
+        {
+            if (userId == currentAdminId)
+            {
+                return (false, "You cannot permanently delete your own admin account.");
+            }
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string userQuery = @"
+            SELECT 
+                u.UserID,
+                u.LoginID,
+                u.Role,
+                u.IsActive,
+                c.WalletBalance
+            FROM Users u
+            LEFT JOIN Customers c ON u.UserID = c.CustomerID
+            WHERE u.UserID = @userId";
+
+                using (SqlCommand cmd = new SqlCommand(userQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@userId", userId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            return (false, "User not found.");
+                        }
+
+                        bool isActive = Convert.ToBoolean(reader["IsActive"]);
+
+                        if (isActive)
+                        {
+                            return (false, "Please deactivate the user before permanently deleting the account.");
+                        }
+
+                        if (reader["WalletBalance"] != DBNull.Value)
+                        {
+                            decimal walletBalance = Convert.ToDecimal(reader["WalletBalance"]);
+
+                            if (walletBalance != 0)
+                            {
+                                return (false, "Customer wallet balance must be $0.00 before the user can be permanently deleted.");
+                            }
+                        }
+                    }
+                }
+
+                if (HasRelatedRecords(conn, "Orders", "CustomerID", userId))
+                    return (false, "This user cannot be deleted because they have order records.");
+
+                if (HasRelatedRecords(conn, "WalletTransactions", "CustomerID", userId))
+                    return (false, "This user cannot be deleted because they have wallet transaction records.");
+
+                if (HasRelatedRecords(conn, "Feedback", "CustomerID", userId))
+                    return (false, "This user cannot be deleted because they have feedback records.");
+
+                if (HasRelatedRecords(conn, "Feedback", "ManagerID", userId))
+                    return (false, "This user cannot be deleted because they have manager response records.");
+
+                if (HasRelatedRecords(conn, "MenuItems", "CreatedByChef", userId))
+                    return (false, "This user cannot be deleted because they created menu items.");
+            }
+
+            return (true, "User can be permanently deleted.");
+        }
+        public void HardDeleteUser(int userId, int currentAdminId)
+        {
+            var deleteCheck = CanHardDeleteUser(userId, currentAdminId);
+
+            if (!deleteCheck.CanDelete)
+            {
+                throw new Exception(deleteCheck.Message);
+            }
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string deleteCustomerQuery = @"
+                    DELETE FROM Customers
+                    WHERE CustomerID = @userId";
+
+                        using (SqlCommand cmd = new SqlCommand(deleteCustomerQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@userId", userId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        string deleteUserQuery = @"
+                    DELETE FROM Users
+                    WHERE UserID = @userId";
+
+                        using (SqlCommand cmd = new SqlCommand(deleteUserQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@userId", userId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }
