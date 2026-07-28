@@ -5,6 +5,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<DineFlowRestaurantSystem.Services.UserService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.AuthService>();
 
 var app = builder.Build();
