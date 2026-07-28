@@ -61,6 +61,7 @@
                         <th>Price</th>
                         <th>Availability</th>
                         <th>Created By</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -86,6 +87,15 @@
                             </td>
 
                             <td>@item.CreatedByUsername</td>
+                            
+                            <td>
+                                <a asp-controller="Admin"
+                                   asp-action="EditMenuItem"
+                                   asp-route-id="@item.MenuItemID"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+                            </td>
                         </tr>
                     }
                 </tbody>

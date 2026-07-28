@@ -134,5 +134,84 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public MenuItemFormViewModel? GetMenuItemById(int menuItemId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT 
+            MenuItemID,
+            CategoryID,
+            ItemName,
+            Description,
+            Price,
+            IsAvailable
+        FROM MenuItems
+        WHERE MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new MenuItemFormViewModel
+                        {
+                            MenuItemID = Convert.ToInt32(reader["MenuItemID"]),
+                            CategoryID = Convert.ToInt32(reader["CategoryID"]),
+                            ItemName = reader["ItemName"].ToString() ?? "",
+                            Description = reader["Description"] == DBNull.Value
+                                ? ""
+                                : reader["Description"].ToString(),
+                            Price = Convert.ToDecimal(reader["Price"]),
+                            IsAvailable = Convert.ToBoolean(reader["IsAvailable"])
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void UpdateMenuItem(MenuItemFormViewModel model)
+        {
+            if (model.MenuItemID == null)
+                throw new Exception("Menu item ID is required for update.");
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        UPDATE MenuItems
+        SET
+            CategoryID = @categoryId,
+            ItemName = @itemName,
+            Description = @description,
+            Price = @price,
+            IsAvailable = @isAvailable
+        WHERE MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryId", model.CategoryID);
+                cmd.Parameters.AddWithValue("@itemName", model.ItemName.Trim());
+
+                cmd.Parameters.AddWithValue("@description",
+                    string.IsNullOrWhiteSpace(model.Description)
+                        ? DBNull.Value
+                        : model.Description.Trim());
+
+                cmd.Parameters.AddWithValue("@price", model.Price);
+                cmd.Parameters.AddWithValue("@isAvailable", model.IsAvailable);
+                cmd.Parameters.AddWithValue("@menuItemId", model.MenuItemID.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

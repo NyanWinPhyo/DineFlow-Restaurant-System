@@ -407,5 +407,65 @@ namespace DineFlowRestaurantSystem.Controllers
                 return View(model);
             }
         }
+
+        [HttpGet]
+        public IActionResult EditMenuItem(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var menuItem = _menuService.GetMenuItemById(id);
+
+            if (menuItem == null)
+            {
+                TempData["ErrorMessage"] = "Menu item not found.";
+                return RedirectToAction("MenuItems");
+            }
+
+            menuItem.Categories = _menuService.GetActiveCategories();
+
+            return View(menuItem);
+        }
+
+        [HttpPost]
+        public IActionResult EditMenuItem(MenuItemFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (model.MenuItemID == null)
+            {
+                ModelState.AddModelError("", "Menu item ID is missing.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+
+            try
+            {
+                _menuService.UpdateMenuItem(model);
+                TempData["SuccessMessage"] = "Menu item updated successfully.";
+                return RedirectToAction("MenuItems");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update menu item: " + ex.Message);
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+        }
     }
 }
