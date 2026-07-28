@@ -421,5 +421,75 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public bool CategoryHasAnyMenuItems(int categoryId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM MenuItems
+        WHERE CategoryID = @categoryId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                conn.Open();
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        public void DeleteMenuCategory(int categoryId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string checkQuery = @"
+            SELECT IsActive
+            FROM MenuCategories
+            WHERE CategoryID = @categoryId";
+
+                bool? isActive = null;
+
+                using (SqlCommand cmd = new SqlCommand(checkQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                    object? result = cmd.ExecuteScalar();
+
+                    if (result == null)
+                    {
+                        throw new Exception("Menu category not found.");
+                    }
+
+                    isActive = Convert.ToBoolean(result);
+                }
+
+                if (isActive == true)
+                {
+                    throw new Exception("Please deactivate the category before permanently deleting it.");
+                }
+
+                if (CategoryHasAnyMenuItems(categoryId))
+                {
+                    throw new Exception("This category cannot be deleted because it still has menu items assigned to it.");
+                }
+
+                string deleteQuery = @"
+            DELETE FROM MenuCategories
+            WHERE CategoryID = @categoryId";
+
+                using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@categoryId", categoryId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }

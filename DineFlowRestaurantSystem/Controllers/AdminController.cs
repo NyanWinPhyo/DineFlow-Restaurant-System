@@ -644,5 +644,27 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("MenuCategories");
         }
+
+        [HttpPost]
+        public IActionResult DeleteMenuCategory(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _menuService.DeleteMenuCategory(id);
+                TempData["SuccessMessage"] = "Menu category permanently deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction("MenuCategories");
+        }   
     }
 }
