@@ -232,5 +232,98 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public List<MenuCategoryListItemViewModel> GetCategories(string? searchTerm = null)
+        {
+            List<MenuCategoryListItemViewModel> categories = new List<MenuCategoryListItemViewModel>();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT CategoryID, CategoryName, IsActive, CreatedAt
+        FROM MenuCategories
+        WHERE 
+            @searchTerm IS NULL
+            OR CategoryName LIKE @searchTerm
+        ORDER BY CategoryID";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        categories.Add(new MenuCategoryListItemViewModel
+                        {
+                            CategoryID = Convert.ToInt32(reader["CategoryID"]),
+                            CategoryName = reader["CategoryName"].ToString() ?? "",
+                            IsActive = Convert.ToBoolean(reader["IsActive"]),
+                            CreatedAt = Convert.ToDateTime(reader["CreatedAt"])
+                        });
+                    }
+                }
+            }
+
+            return categories;
+        }
+        public bool IsCategoryNameTaken(string categoryName, int? excludeCategoryId = null)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM MenuCategories
+        WHERE CategoryName = @categoryName
+          AND (@excludeCategoryId IS NULL OR CategoryID <> @excludeCategoryId)";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryName", categoryName.Trim());
+
+                if (excludeCategoryId == null)
+                {
+                    cmd.Parameters.AddWithValue("@excludeCategoryId", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@excludeCategoryId", excludeCategoryId.Value);
+                }
+
+                conn.Open();
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        public void AddMenuCategory(MenuCategoryFormViewModel model)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        INSERT INTO MenuCategories (CategoryName, IsActive)
+        VALUES (@categoryName, @isActive)";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryName", model.CategoryName.Trim());
+                cmd.Parameters.AddWithValue("@isActive", model.IsActive);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

@@ -492,5 +492,69 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("MenuItems");
         }
+        public IActionResult MenuCategories(string? searchTerm)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+
+            var categories = _menuService.GetCategories(searchTerm);
+
+            return View(categories);
+        }
+
+        [HttpGet]
+        public IActionResult AddMenuCategory()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            return View(new MenuCategoryFormViewModel());
+        }
+
+        [HttpPost]
+        public IActionResult AddMenuCategory(MenuCategoryFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!string.IsNullOrWhiteSpace(model.CategoryName) &&
+                _menuService.IsCategoryNameTaken(model.CategoryName))
+            {
+                ModelState.AddModelError("CategoryName", "This category name already exists.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _menuService.AddMenuCategory(model);
+                TempData["SuccessMessage"] = "Menu category added successfully.";
+                return RedirectToAction("MenuCategories");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to add menu category: " + ex.Message);
+                return View(model);
+            }
+        }
     }
 }
