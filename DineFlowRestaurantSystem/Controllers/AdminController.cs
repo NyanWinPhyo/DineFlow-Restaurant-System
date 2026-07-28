@@ -25,7 +25,7 @@ namespace DineFlowRestaurantSystem.Controllers
             return View();
         }
 
-        public IActionResult Users()
+        public IActionResult Users(string? searchTerm)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
                 return RedirectToAction("Login", "Auth");
@@ -34,8 +34,9 @@ namespace DineFlowRestaurantSystem.Controllers
                 return RedirectToAction("AccessDenied", "Auth");
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
 
-            var users = _userService.GetAllUsers();
+            var users = _userService.GetUsers(searchTerm);
 
             return View(users);
         }
