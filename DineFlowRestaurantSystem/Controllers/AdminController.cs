@@ -467,5 +467,30 @@ namespace DineFlowRestaurantSystem.Controllers
                 return View(model);
             }
         }
+
+        [HttpPost]
+        public IActionResult SetMenuItemAvailability(int id, bool isAvailable)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _menuService.SetMenuItemAvailability(id, isAvailable);
+
+                TempData["SuccessMessage"] = isAvailable
+                    ? "Menu item marked as available."
+                    : "Menu item marked as unavailable.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to update menu item availability: " + ex.Message;
+            }
+
+            return RedirectToAction("MenuItems");
+        }
     }
 }

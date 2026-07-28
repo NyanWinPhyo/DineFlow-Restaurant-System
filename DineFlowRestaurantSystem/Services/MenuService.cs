@@ -213,5 +213,24 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public void SetMenuItemAvailability(int menuItemId, bool isAvailable)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        UPDATE MenuItems
+        SET IsAvailable = @isAvailable
+        WHERE MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@isAvailable", isAvailable);
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

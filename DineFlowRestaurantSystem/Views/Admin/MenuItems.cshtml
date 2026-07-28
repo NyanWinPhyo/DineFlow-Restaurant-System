@@ -89,12 +89,40 @@
                             <td>@item.CreatedByUsername</td>
                             
                             <td>
-                                <a asp-controller="Admin"
-                                   asp-action="EditMenuItem"
-                                   asp-route-id="@item.MenuItemID"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Edit
-                                </a>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="Admin"
+                                       asp-action="EditMenuItem"
+                                       asp-route-id="@item.MenuItemID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Edit
+                                    </a>
+
+                                    @if (item.IsAvailable)
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="SetMenuItemAvailability"
+                                              asp-route-id="@item.MenuItemID"
+                                              asp-route-isAvailable="false"
+                                              method="post"
+                                              onsubmit="return confirm('Mark this menu item as unavailable?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Mark Unavailable
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-controller="Admin"
+                                              asp-action="SetMenuItemAvailability"
+                                              asp-route-id="@item.MenuItemID"
+                                              asp-route-isAvailable="true"
+                                              method="post">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                Mark Available
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
