@@ -491,5 +491,97 @@ namespace DineFlowRestaurantSystem.Services
                 }
             }
         }
+        private bool TableColumnExists(SqlConnection conn, string tableName, string columnName)
+        {
+            string query = @"
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+          AND TABLE_NAME = @tableName
+          AND COLUMN_NAME = @columnName";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@columnName", columnName);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+
+        private bool HasRelatedRecords(SqlConnection conn, string tableName, string columnName, int id)
+        {
+            if (!TableColumnExists(conn, tableName, columnName))
+                return false;
+
+            string query = $@"
+        SELECT COUNT(*)
+        FROM [{tableName}]
+        WHERE [{columnName}] = @id";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
+            }
+        }
+        public void DeleteMenuItem(int menuItemId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string checkQuery = @"
+            SELECT IsAvailable
+            FROM MenuItems
+            WHERE MenuItemID = @menuItemId";
+
+                bool? isAvailable = null;
+
+                using (SqlCommand cmd = new SqlCommand(checkQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                    object? result = cmd.ExecuteScalar();
+
+                    if (result == null)
+                    {
+                        throw new Exception("Menu item not found.");
+                    }
+
+                    isAvailable = Convert.ToBoolean(result);
+                }
+
+                if (isAvailable == true)
+                {
+                    throw new Exception("Please mark the menu item as unavailable before permanently deleting it.");
+                }
+
+                if (HasRelatedRecords(conn, "OrderItems", "MenuItemID", menuItemId))
+                {
+                    throw new Exception("This menu item cannot be deleted because it has order records.");
+                }
+
+                if (HasRelatedRecords(conn, "MenuItemIngredients", "MenuItemID", menuItemId))
+                {
+                    throw new Exception("This menu item cannot be deleted because it has ingredient requirement records.");
+                }
+
+                string deleteQuery = @"
+            DELETE FROM MenuItems
+            WHERE MenuItemID = @menuItemId";
+
+                using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }
