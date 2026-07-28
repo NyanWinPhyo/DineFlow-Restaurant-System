@@ -157,7 +157,7 @@ namespace DineFlowRestaurantSystem.Services
                             UserID = Convert.ToInt32(reader["UserID"]),
                             LoginID = reader["LoginID"].ToString() ?? "",
                             Username = reader["Username"].ToString() ?? "",
-                            Password = reader["PasswordHash"].ToString() ?? "",
+                            Password = "",
                             Role = reader["Role"].ToString() ?? "",
                             IsActive = Convert.ToBoolean(reader["IsActive"]),
                             WalletBalance = reader["WalletBalance"] == DBNull.Value
@@ -185,24 +185,46 @@ namespace DineFlowRestaurantSystem.Services
                 {
                     try
                     {
-                        string updateUserQuery = @"
-                    UPDATE Users
-                    SET 
-                        LoginID = @loginId,
-                        Username = @username,
-                        PasswordHash = @passwordHash,
-                        Role = @role,
-                        IsActive = @isActive
-                    WHERE UserID = @userId";
+                        string updateUserQuery;
+
+                        bool isPasswordChanged = !string.IsNullOrWhiteSpace(model.Password);
+
+                        if (isPasswordChanged)
+                        {
+                            updateUserQuery = @"
+                                UPDATE Users
+                                SET 
+                                    LoginID = @loginId,
+                                    Username = @username,
+                                    PasswordHash = @passwordHash,
+                                    Role = @role,
+                                    IsActive = @isActive
+                                WHERE UserID = @userId";
+                        }
+                        else
+                        {
+                            updateUserQuery = @"
+                                UPDATE Users
+                                SET 
+                                    LoginID = @loginId,
+                                    Username = @username,
+                                    Role = @role,
+                                    IsActive = @isActive
+                                WHERE UserID = @userId";
+                        }
 
                         using (SqlCommand cmd = new SqlCommand(updateUserQuery, conn, transaction))
                         {
                             cmd.Parameters.AddWithValue("@loginId", model.LoginID.Trim());
                             cmd.Parameters.AddWithValue("@username", model.Username.Trim());
-                            cmd.Parameters.AddWithValue("@passwordHash", model.Password.Trim());
                             cmd.Parameters.AddWithValue("@role", model.Role);
                             cmd.Parameters.AddWithValue("@isActive", model.IsActive);
                             cmd.Parameters.AddWithValue("@userId", model.UserID.Value);
+
+                            if (isPasswordChanged)
+                            {
+                                cmd.Parameters.AddWithValue("@passwordHash", model.Password!.Trim());
+                            }
 
                             cmd.ExecuteNonQuery();
                         }
@@ -423,6 +445,20 @@ namespace DineFlowRestaurantSystem.Services
                         throw;
                     }
                 }
+            }
+        }
+        public int GetTotalUserCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = "SELECT COUNT(*) FROM Users";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
     }

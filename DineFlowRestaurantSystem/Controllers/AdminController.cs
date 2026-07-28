@@ -23,7 +23,16 @@ namespace DineFlowRestaurantSystem.Controllers
                 return RedirectToAction("AccessDenied", "Auth");
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-            return View();
+
+            var dashboard = new AdminDashboardViewModel
+            {
+                TotalUsers = _userService.GetTotalUserCount(),
+                TotalOrders = 0,
+                TotalSales = 0,
+                ActiveRole = SessionHelper.GetRole(HttpContext)
+            };
+
+            return View(dashboard);
         }
 
         public IActionResult Users(string? searchTerm)
@@ -89,7 +98,12 @@ namespace DineFlowRestaurantSystem.Controllers
                 return RedirectToAction("AccessDenied", "Auth");
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-
+            
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError("Password", "Password is required when adding a new user.");
+            }
+            
             if (model.Role == "Customer" && model.WalletBalance == null)
             {
                 ModelState.AddModelError("WalletBalance", "Wallet balance is required for customer accounts.");

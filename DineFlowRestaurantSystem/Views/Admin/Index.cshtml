@@ -1,4 +1,5 @@
-﻿@{
+﻿@model DineFlowRestaurantSystem.ViewModels.AdminDashboardViewModel
+@{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Admin Dashboard";
 }
@@ -8,7 +9,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Users</h6>
-                <h2>4</h2>
+                <h2>@Model.TotalUsers</h2>
             </div>
         </div>
     </div>
@@ -17,7 +18,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Orders</h6>
-                <h2>0</h2>
+                <h2>@Model.TotalOrders</h2>
             </div>
         </div>
     </div>
@@ -26,7 +27,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Sales</h6>
-                <h2>$0.00</h2>
+                <h2>@Model.TotalSales.ToString("C")</h2>
             </div>
         </div>
     </div>
@@ -35,7 +36,7 @@
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Active Role</h6>
-                <h2>Admin</h2>
+                <h2>@Model.ActiveRole</h2>
             </div>
         </div>
     </div>

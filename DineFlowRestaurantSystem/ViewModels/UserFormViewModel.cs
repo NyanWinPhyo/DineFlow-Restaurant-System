@@ -13,9 +13,9 @@ namespace DineFlowRestaurantSystem.ViewModels
         [Required]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
         [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
+        [Display(Name = "Password")]
+        public string? Password { get; set; }
 
         [Required]
         public string Role { get; set; } = string.Empty;
