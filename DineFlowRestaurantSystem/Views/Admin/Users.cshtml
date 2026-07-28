@@ -59,6 +59,7 @@
                         <th>Role</th>
                         <th>Wallet Balance</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -91,6 +92,15 @@
                                 {
                                     <span class="badge bg-secondary">Inactive</span>
                                 }
+                            </td>
+
+                            <td>
+                                <a asp-controller="Admin"
+                                   asp-action="EditUser"
+                                   asp-route-id="@user.UserID"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
                             </td>
                         </tr>
                     }

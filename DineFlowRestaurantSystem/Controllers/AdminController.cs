@@ -117,5 +117,65 @@ namespace DineFlowRestaurantSystem.Controllers
                 return View(model);
             }
         }
+        [HttpGet]
+        public IActionResult EditUser(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var user = _userService.GetUserById(id);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("Users");
+            }
+
+            return View(user);
+        }
+
+        [HttpPost]
+        public IActionResult EditUser(UserFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (model.Role == "Customer" && model.WalletBalance == null)
+            {
+                ModelState.AddModelError("WalletBalance", "Wallet balance is required for customer accounts.");
+            }
+
+            if (model.Role != "Customer")
+            {
+                model.WalletBalance = null;
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _userService.UpdateUser(model);
+                TempData["SuccessMessage"] = "User updated successfully.";
+                return RedirectToAction("Users");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update user: " + ex.Message);
+                return View(model);
+            }
+        }
     }
 }

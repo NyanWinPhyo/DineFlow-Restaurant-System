@@ -124,5 +124,130 @@ namespace DineFlowRestaurantSystem.Services
                 }
             }
         }
+        public UserFormViewModel? GetUserById(int userId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT 
+            u.UserID,
+            u.LoginID,
+            u.Username,
+            u.PasswordHash,
+            u.Role,
+            u.IsActive,
+            c.WalletBalance
+        FROM Users u
+        LEFT JOIN Customers c ON u.UserID = c.CustomerID
+        WHERE u.UserID = @userId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new UserFormViewModel
+                        {
+                            UserID = Convert.ToInt32(reader["UserID"]),
+                            LoginID = reader["LoginID"].ToString() ?? "",
+                            Username = reader["Username"].ToString() ?? "",
+                            Password = reader["PasswordHash"].ToString() ?? "",
+                            Role = reader["Role"].ToString() ?? "",
+                            IsActive = Convert.ToBoolean(reader["IsActive"]),
+                            WalletBalance = reader["WalletBalance"] == DBNull.Value
+                                ? null
+                                : Convert.ToDecimal(reader["WalletBalance"])
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void UpdateUser(UserFormViewModel model)
+        {
+            if (model.UserID == null)
+                throw new Exception("User ID is required for update.");
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string updateUserQuery = @"
+                    UPDATE Users
+                    SET 
+                        LoginID = @loginId,
+                        Username = @username,
+                        PasswordHash = @passwordHash,
+                        Role = @role,
+                        IsActive = @isActive
+                    WHERE UserID = @userId";
+
+                        using (SqlCommand cmd = new SqlCommand(updateUserQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@loginId", model.LoginID.Trim());
+                            cmd.Parameters.AddWithValue("@username", model.Username.Trim());
+                            cmd.Parameters.AddWithValue("@passwordHash", model.Password.Trim());
+                            cmd.Parameters.AddWithValue("@role", model.Role);
+                            cmd.Parameters.AddWithValue("@isActive", model.IsActive);
+                            cmd.Parameters.AddWithValue("@userId", model.UserID.Value);
+
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        if (model.Role == "Customer")
+                        {
+                            string upsertCustomerQuery = @"
+                        IF EXISTS (SELECT 1 FROM Customers WHERE CustomerID = @customerId)
+                            UPDATE Customers
+                            SET WalletBalance = @walletBalance
+                            WHERE CustomerID = @customerId
+                        ELSE
+                            INSERT INTO Customers (CustomerID, WalletBalance)
+                            VALUES (@customerId, @walletBalance)";
+
+                            using (SqlCommand cmd = new SqlCommand(upsertCustomerQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@customerId", model.UserID.Value);
+                                cmd.Parameters.AddWithValue("@walletBalance", model.WalletBalance ?? 0);
+
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            string deleteCustomerQuery = @"
+                        DELETE FROM Customers
+                        WHERE CustomerID = @customerId";
+
+                            using (SqlCommand cmd = new SqlCommand(deleteCustomerQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@customerId", model.UserID.Value);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }
