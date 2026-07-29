@@ -703,11 +703,11 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM MenuItems
-        WHERE ItemName = @itemName
-          AND CategoryID = @categoryId
-          AND (@excludeMenuItemId IS NULL OR MenuItemID <> @excludeMenuItemId)";
+                SELECT COUNT(*)
+                FROM MenuItems
+                WHERE ItemName = @itemName
+                  AND CategoryID = @categoryId
+                  AND (@excludeMenuItemId IS NULL OR MenuItemID <> @excludeMenuItemId)";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -748,9 +748,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM MenuItems
-        WHERE IsAvailable = 1";
+                SELECT COUNT(*)
+                FROM MenuItems
+                WHERE IsAvailable = 1";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -771,6 +771,69 @@ namespace DineFlowRestaurantSystem.Services
                 conn.Open();
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
+        }
+        public List<CustomerMenuItemViewModel> GetAvailableMenuItemsForCustomer(string? searchTerm = null)
+        {
+            List<CustomerMenuItemViewModel> menuItems = new List<CustomerMenuItemViewModel>();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    mi.MenuItemID,
+                    mi.ItemName,
+                    mi.Description,
+                    mi.Price,
+                    mi.ImagePath,
+                    mc.CategoryName
+                FROM MenuItems mi
+                INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+                WHERE mi.IsAvailable = 1
+                  AND mc.IsActive = 1
+                  AND (
+                        @searchTerm IS NULL
+                        OR mi.ItemName LIKE @searchTerm
+                        OR mi.Description LIKE @searchTerm
+                        OR mc.CategoryName LIKE @searchTerm
+                      )
+                ORDER BY mc.CategoryName, mi.ItemName";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        menuItems.Add(new CustomerMenuItemViewModel
+                        {
+                            MenuItemID = Convert.ToInt32(reader["MenuItemID"]),
+                            ItemName = reader["ItemName"].ToString() ?? "",
+                            Description = reader["Description"] == DBNull.Value
+                                ? ""
+                                : reader["Description"].ToString() ?? "",
+                            Price = Convert.ToDecimal(reader["Price"]),
+                            ImagePath = reader["ImagePath"] == DBNull.Value
+                                ? null
+                                : reader["ImagePath"].ToString(),
+                            CategoryName = reader["CategoryName"].ToString() ?? ""
+                        });
+                    }
+                }
+            }
+
+            return menuItems;
         }
     }
 }

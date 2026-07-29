@@ -1,0 +1,88 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.CustomerMenuItemViewModel>
+
+@{
+    ViewData["Title"] = "Menu";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Menu</h2>
+            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Choose something nice.</p>
+        </div>
+
+        <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+            Logout
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-controller="Customer" asp-action="Menu" method="get" class="d-flex gap-2">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Search food, drinks, categories..." />
+
+                <button type="submit" class="btn btn-primary">
+                    Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No available menu items found.
+        </div>
+    }
+    else
+    {
+        var groupedMenu = Model.GroupBy(item => item.CategoryName);
+
+        foreach (var categoryGroup in groupedMenu)
+        {
+            <h4 class="mt-4 mb-3">@categoryGroup.Key</h4>
+
+            <div class="row g-4">
+                @foreach (var item in categoryGroup)
+                {
+                    <div class="col-md-4">
+                        <div class="card h-100 menu-card">
+                            @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                            {
+                                <img src="@item.ImagePath"
+                                     class="card-img-top customer-menu-image"
+                                     alt="@item.ItemName" />
+                            }
+                            else
+                            {
+                                <div class="customer-menu-placeholder">
+                                    No Image
+                                </div>
+                            }
+
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@item.ItemName</h5>
+
+                                <p class="card-text text-muted">
+                                    @item.Description
+                                </p>
+
+                                <div class="mt-auto">
+                                    <h5 class="mb-3">@item.Price.ToString("C")</h5>
+
+                                    <button class="btn btn-primary w-100" disabled>
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
