@@ -386,6 +386,13 @@ namespace DineFlowRestaurantSystem.Controllers
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
 
+            if (!string.IsNullOrWhiteSpace(model.ItemName) &&
+                model.CategoryID > 0 &&
+                _menuService.IsMenuItemNameTaken(model.ItemName, model.CategoryID))
+            {
+                ModelState.AddModelError("ItemName", "This menu item already exists in the selected category.");
+            }
+
             if (!ModelState.IsValid)
             {
                 model.Categories = _menuService.GetActiveCategories();
@@ -446,6 +453,13 @@ namespace DineFlowRestaurantSystem.Controllers
             if (model.MenuItemID == null)
             {
                 ModelState.AddModelError("", "Menu item ID is missing.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.ItemName) &&
+                model.CategoryID > 0 &&
+                _menuService.IsMenuItemNameTaken(model.ItemName, model.CategoryID, model.MenuItemID))
+            {
+                ModelState.AddModelError("ItemName", "This menu item already exists in the selected category.");
             }
 
             if (!ModelState.IsValid)

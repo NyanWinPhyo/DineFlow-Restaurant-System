@@ -427,3 +427,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Uploaded menu item images
+DineFlowRestaurantSystem/wwwroot/uploads/menu-items/*

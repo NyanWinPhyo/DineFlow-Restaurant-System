@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace DineFlowRestaurantSystem.ViewModels
 {
@@ -23,6 +24,13 @@ namespace DineFlowRestaurantSystem.ViewModels
 
         [Display(Name = "Available")]
         public bool IsAvailable { get; set; } = true;
+
+        [Display(Name = "Food Image")]
+        public IFormFile? ImageFile { get; set; }
+
+        public string? ExistingImagePath { get; set; }
+
+        public bool RemoveImage { get; set; }
 
         public List<MenuCategoryOptionViewModel> Categories { get; set; } = new();
     }

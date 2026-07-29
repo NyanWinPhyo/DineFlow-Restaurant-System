@@ -1,15 +1,19 @@
 ﻿using DineFlowRestaurantSystem.ViewModels;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace DineFlowRestaurantSystem.Services
 {
     public class MenuService
     {
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public MenuService(IConfiguration configuration)
+        public MenuService(IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
             _configuration = configuration;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public List<MenuItemListItemViewModel> GetMenuItems(string? searchTerm = null)
@@ -25,6 +29,7 @@ namespace DineFlowRestaurantSystem.Services
                     mi.Description,
                     mi.Price,
                     mi.IsAvailable,
+                    mi.ImagePath,
                     mc.CategoryName,
                     u.Username AS CreatedByUsername
                 FROM MenuItems mi
@@ -65,7 +70,10 @@ namespace DineFlowRestaurantSystem.Services
                             CategoryName = reader["CategoryName"].ToString() ?? "",
                             CreatedByUsername = reader["CreatedByUsername"] == DBNull.Value
                                 ? "Unknown"
-                                : reader["CreatedByUsername"].ToString() ?? "Unknown"
+                                : reader["CreatedByUsername"].ToString() ?? "Unknown",
+                            ImagePath = reader["ImagePath"] == DBNull.Value
+                                ? null
+                                : reader["ImagePath"].ToString(),
                         });
                     }
                 }
@@ -80,10 +88,10 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT CategoryID, CategoryName
-        FROM MenuCategories
-        WHERE IsActive = 1
-        ORDER BY CategoryName";
+                SELECT CategoryID, CategoryName
+                FROM MenuCategories
+                WHERE IsActive = 1
+                ORDER BY CategoryName";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -109,29 +117,50 @@ namespace DineFlowRestaurantSystem.Services
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
-            string query = @"
-        INSERT INTO MenuItems
-        (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-        VALUES
-        (@categoryId, @itemName, @description, @price, @isAvailable, @createdByUserId)";
+            string? imagePath = null;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            if (model.ImageFile != null)
             {
-                cmd.Parameters.AddWithValue("@categoryId", model.CategoryID);
-                cmd.Parameters.AddWithValue("@itemName", model.ItemName.Trim());
+                imagePath = SaveMenuItemImage(model.ImageFile);
+            }
 
-                cmd.Parameters.AddWithValue("@description",
-                    string.IsNullOrWhiteSpace(model.Description)
-                        ? DBNull.Value
-                        : model.Description.Trim());
+            string query = @"
+                INSERT INTO MenuItems
+                (CategoryID, ItemName, Description, Price, IsAvailable, ImagePath, CreatedByUserID)
+                VALUES
+                (@categoryId, @itemName, @description, @price, @isAvailable, @imagePath, @createdByUserId)";
 
-                cmd.Parameters.AddWithValue("@price", model.Price);
-                cmd.Parameters.AddWithValue("@isAvailable", model.IsAvailable);
-                cmd.Parameters.AddWithValue("@createdByUserId", createdByUserId);
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@categoryId", model.CategoryID);
+                    cmd.Parameters.AddWithValue("@itemName", model.ItemName.Trim());
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@description",
+                        string.IsNullOrWhiteSpace(model.Description)
+                            ? DBNull.Value
+                            : model.Description.Trim());
+
+                    cmd.Parameters.AddWithValue("@price", model.Price);
+                    cmd.Parameters.AddWithValue("@isAvailable", model.IsAvailable);
+
+                    cmd.Parameters.AddWithValue("@imagePath",
+                        string.IsNullOrWhiteSpace(imagePath)
+                            ? DBNull.Value
+                            : imagePath);
+
+                    cmd.Parameters.AddWithValue("@createdByUserId", createdByUserId);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch
+            {
+                DeleteMenuItemImage(imagePath);
+                throw;
             }
         }
         public MenuItemFormViewModel? GetMenuItemById(int menuItemId)
@@ -139,15 +168,16 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT 
-            MenuItemID,
-            CategoryID,
-            ItemName,
-            Description,
-            Price,
-            IsAvailable
-        FROM MenuItems
-        WHERE MenuItemID = @menuItemId";
+                SELECT 
+                    MenuItemID,
+                    CategoryID,
+                    ItemName,
+                    Description,
+                    Price,
+                    IsAvailable,
+                    ImagePath
+                FROM MenuItems
+                WHERE MenuItemID = @menuItemId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -169,7 +199,10 @@ namespace DineFlowRestaurantSystem.Services
                                 ? ""
                                 : reader["Description"].ToString(),
                             Price = Convert.ToDecimal(reader["Price"]),
-                            IsAvailable = Convert.ToBoolean(reader["IsAvailable"])
+                            IsAvailable = Convert.ToBoolean(reader["IsAvailable"]),
+                            ExistingImagePath = reader["ImagePath"] == DBNull.Value
+                                ? null
+                                : reader["ImagePath"].ToString()
                         };
                     }
                 }
@@ -184,15 +217,29 @@ namespace DineFlowRestaurantSystem.Services
 
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
+            string? imagePath = model.ExistingImagePath;
+
+            if (model.ImageFile != null)
+            {
+                DeleteMenuItemImage(imagePath);
+                imagePath = SaveMenuItemImage(model.ImageFile);
+            }
+            else if (model.RemoveImage)
+            {
+                DeleteMenuItemImage(imagePath);
+                imagePath = null;
+            }
+
             string query = @"
-        UPDATE MenuItems
-        SET
-            CategoryID = @categoryId,
-            ItemName = @itemName,
-            Description = @description,
-            Price = @price,
-            IsAvailable = @isAvailable
-        WHERE MenuItemID = @menuItemId";
+                UPDATE MenuItems
+                SET
+                    CategoryID = @categoryId,
+                    ItemName = @itemName,
+                    Description = @description,
+                    Price = @price,
+                    IsAvailable = @isAvailable,
+                    ImagePath = @imagePath
+                WHERE MenuItemID = @menuItemId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -207,6 +254,12 @@ namespace DineFlowRestaurantSystem.Services
 
                 cmd.Parameters.AddWithValue("@price", model.Price);
                 cmd.Parameters.AddWithValue("@isAvailable", model.IsAvailable);
+
+                cmd.Parameters.AddWithValue("@imagePath",
+                    string.IsNullOrWhiteSpace(imagePath)
+                        ? DBNull.Value
+                        : imagePath);
+
                 cmd.Parameters.AddWithValue("@menuItemId", model.MenuItemID.Value);
 
                 conn.Open();
@@ -218,9 +271,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        UPDATE MenuItems
-        SET IsAvailable = @isAvailable
-        WHERE MenuItemID = @menuItemId";
+                UPDATE MenuItems
+                SET IsAvailable = @isAvailable
+                WHERE MenuItemID = @menuItemId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -239,12 +292,12 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT CategoryID, CategoryName, IsActive, CreatedAt
-        FROM MenuCategories
-        WHERE 
-            @searchTerm IS NULL
-            OR CategoryName LIKE @searchTerm
-        ORDER BY CategoryID";
+                SELECT CategoryID, CategoryName, IsActive, CreatedAt
+                FROM MenuCategories
+                WHERE 
+                    @searchTerm IS NULL
+                    OR CategoryName LIKE @searchTerm
+                ORDER BY CategoryID";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -282,10 +335,10 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM MenuCategories
-        WHERE CategoryName = @categoryName
-          AND (@excludeCategoryId IS NULL OR CategoryID <> @excludeCategoryId)";
+                SELECT COUNT(*)
+                FROM MenuCategories
+                WHERE CategoryName = @categoryName
+                  AND (@excludeCategoryId IS NULL OR CategoryID <> @excludeCategoryId)";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -312,8 +365,8 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        INSERT INTO MenuCategories (CategoryName, IsActive)
-        VALUES (@categoryName, @isActive)";
+                INSERT INTO MenuCategories (CategoryName, IsActive)
+                VALUES (@categoryName, @isActive)";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -330,9 +383,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT CategoryID, CategoryName, IsActive
-        FROM MenuCategories
-        WHERE CategoryID = @categoryId";
+                SELECT CategoryID, CategoryName, IsActive
+                FROM MenuCategories
+                WHERE CategoryID = @categoryId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -365,10 +418,10 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        UPDATE MenuCategories
-        SET CategoryName = @categoryName,
-            IsActive = @isActive
-        WHERE CategoryID = @categoryId";
+                UPDATE MenuCategories
+                SET CategoryName = @categoryName,
+                    IsActive = @isActive
+                WHERE CategoryID = @categoryId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -386,10 +439,10 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM MenuItems
-        WHERE CategoryID = @categoryId
-          AND IsAvailable = 1";
+                SELECT COUNT(*)
+                FROM MenuItems
+                WHERE CategoryID = @categoryId
+                  AND IsAvailable = 1";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -407,9 +460,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        UPDATE MenuCategories
-        SET IsActive = @isActive
-        WHERE CategoryID = @categoryId";
+                UPDATE MenuCategories
+                SET IsActive = @isActive
+                WHERE CategoryID = @categoryId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -426,9 +479,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM MenuItems
-        WHERE CategoryID = @categoryId";
+                SELECT COUNT(*)
+                FROM MenuItems
+                WHERE CategoryID = @categoryId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -450,9 +503,9 @@ namespace DineFlowRestaurantSystem.Services
                 conn.Open();
 
                 string checkQuery = @"
-            SELECT IsActive
-            FROM MenuCategories
-            WHERE CategoryID = @categoryId";
+                    SELECT IsActive
+                    FROM MenuCategories
+                    WHERE CategoryID = @categoryId";
 
                 bool? isActive = null;
 
@@ -481,8 +534,8 @@ namespace DineFlowRestaurantSystem.Services
                 }
 
                 string deleteQuery = @"
-            DELETE FROM MenuCategories
-            WHERE CategoryID = @categoryId";
+                    DELETE FROM MenuCategories
+                    WHERE CategoryID = @categoryId";
 
                 using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
                 {
@@ -494,11 +547,11 @@ namespace DineFlowRestaurantSystem.Services
         private bool TableColumnExists(SqlConnection conn, string tableName, string columnName)
         {
             string query = @"
-        SELECT COUNT(*)
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = 'dbo'
-          AND TABLE_NAME = @tableName
-          AND COLUMN_NAME = @columnName";
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'dbo'
+                  AND TABLE_NAME = @tableName
+                  AND COLUMN_NAME = @columnName";
 
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
@@ -516,9 +569,9 @@ namespace DineFlowRestaurantSystem.Services
                 return false;
 
             string query = $@"
-        SELECT COUNT(*)
-        FROM [{tableName}]
-        WHERE [{columnName}] = @id";
+                SELECT COUNT(*)
+                FROM [{tableName}]
+                WHERE [{columnName}] = @id";
 
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
@@ -537,24 +590,29 @@ namespace DineFlowRestaurantSystem.Services
                 conn.Open();
 
                 string checkQuery = @"
-            SELECT IsAvailable
-            FROM MenuItems
-            WHERE MenuItemID = @menuItemId";
+                    SELECT IsAvailable, ImagePath
+                    FROM MenuItems
+                    WHERE MenuItemID = @menuItemId";
 
                 bool? isAvailable = null;
+                string? imagePath = null;
 
                 using (SqlCommand cmd = new SqlCommand(checkQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
 
-                    object? result = cmd.ExecuteScalar();
-
-                    if (result == null)
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        throw new Exception("Menu item not found.");
-                    }
+                        if (!reader.Read())
+                        {
+                            throw new Exception("Menu item not found.");
+                        }
 
-                    isAvailable = Convert.ToBoolean(result);
+                        isAvailable = Convert.ToBoolean(reader["IsAvailable"]);
+                        imagePath = reader["ImagePath"] == DBNull.Value
+                            ? null
+                            : reader["ImagePath"].ToString();
+                    }
                 }
 
                 if (isAvailable == true)
@@ -573,14 +631,103 @@ namespace DineFlowRestaurantSystem.Services
                 }
 
                 string deleteQuery = @"
-            DELETE FROM MenuItems
-            WHERE MenuItemID = @menuItemId";
+                    DELETE FROM MenuItems
+                    WHERE MenuItemID = @menuItemId";
 
                 using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
                 {
                     cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
                     cmd.ExecuteNonQuery();
                 }
+
+                DeleteMenuItemImage(imagePath);
+            }
+        }
+        private string SaveMenuItemImage(IFormFile imageFile)
+        {
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+            string extension = Path.GetExtension(imageFile.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new Exception("Only JPG, JPEG, PNG, and WEBP images are allowed.");
+            }
+
+            long maxFileSize = 2 * 1024 * 1024;
+
+            if (imageFile.Length > maxFileSize)
+            {
+                throw new Exception("Image size must not exceed 2 MB.");
+            }
+
+            string uploadsFolder = Path.Combine(
+                _webHostEnvironment.WebRootPath,
+                "uploads",
+                "menu-items"
+            );
+
+            Directory.CreateDirectory(uploadsFolder);
+
+            string fileName = $"{Guid.NewGuid()}{extension}";
+            string filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (FileStream stream = new FileStream(filePath, FileMode.Create))
+            {
+                imageFile.CopyTo(stream);
+            }
+
+            return $"/uploads/menu-items/{fileName}";
+        }
+
+        private void DeleteMenuItemImage(string? imagePath)
+        {
+            if (string.IsNullOrWhiteSpace(imagePath))
+                return;
+
+            string fileName = Path.GetFileName(imagePath);
+
+            string filePath = Path.Combine(
+                _webHostEnvironment.WebRootPath,
+                "uploads",
+                "menu-items",
+                fileName
+            );
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        public bool IsMenuItemNameTaken(string itemName, int categoryId, int? excludeMenuItemId = null)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM MenuItems
+        WHERE ItemName = @itemName
+          AND CategoryID = @categoryId
+          AND (@excludeMenuItemId IS NULL OR MenuItemID <> @excludeMenuItemId)";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@itemName", itemName.Trim());
+                cmd.Parameters.AddWithValue("@categoryId", categoryId);
+
+                if (excludeMenuItemId == null)
+                {
+                    cmd.Parameters.AddWithValue("@excludeMenuItemId", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@excludeMenuItemId", excludeMenuItemId.Value);
+                }
+
+                conn.Open();
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 0;
             }
         }
     }

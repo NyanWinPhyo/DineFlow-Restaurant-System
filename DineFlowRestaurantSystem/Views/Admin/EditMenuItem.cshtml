@@ -11,10 +11,14 @@
     </div>
 
     <div class="card-body">
-        <form asp-action="EditMenuItem" method="post">
+        <form asp-action="EditMenuItem"
+              method="post"
+              enctype="multipart/form-data"
+              onsubmit="disableSubmitButton(this)">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <input type="hidden" asp-for="MenuItemID" />
+            <input type="hidden" asp-for="ExistingImagePath" />
 
             <div class="mb-3">
                 <label asp-for="ItemName" class="form-label"></label>
@@ -49,6 +53,34 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
+            <div class="mb-3">
+                <label asp-for="ImageFile" class="form-label">Food Image</label>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ExistingImagePath))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.ExistingImagePath"
+                             alt="@Model.ItemName"
+                             class="menu-item-preview" />
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="RemoveImage" class="form-check-input" />
+                        <label asp-for="RemoveImage" class="form-check-label">
+                            Remove current image
+                        </label>
+                    </div>
+                }
+
+                <input asp-for="ImageFile"
+                       type="file"
+                       class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp" />
+
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
+                <div class="form-text">Upload a new image to replace the current one.</div>
+            </div>
+
             <div class="form-check mb-3">
                 <input asp-for="IsAvailable" class="form-check-input" />
                 <label asp-for="IsAvailable" class="form-check-label"></label>
@@ -69,4 +101,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function disableSubmitButton(form) {
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            const button = form.querySelector("button[type='submit']");
+
+            if (button) {
+                button.disabled = true;
+                button.innerText = "Saving...";
+            }
+        }
+    </script>
+}
 }

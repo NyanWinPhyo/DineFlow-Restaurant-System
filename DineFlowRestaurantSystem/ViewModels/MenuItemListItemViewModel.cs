@@ -9,5 +9,6 @@
         public decimal Price { get; set; }
         public bool IsAvailable { get; set; }
         public string CreatedByUsername { get; set; } = string.Empty;
+        public string? ImagePath { get; set; }
     }
 }

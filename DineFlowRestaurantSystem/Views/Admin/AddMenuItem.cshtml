@@ -11,7 +11,10 @@
     </div>
 
     <div class="card-body">
-        <form asp-action="AddMenuItem" method="post">
+        <form asp-action="AddMenuItem"
+              method="post"
+              enctype="multipart/form-data"
+              onsubmit="disableSubmitButton(this)">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <div class="mb-3">
@@ -47,6 +50,16 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
 
+            <div class="mb-3">
+                <label asp-for="ImageFile" class="form-label"></label>
+                <input asp-for="ImageFile"
+                       type="file"
+                       class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp" />
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
+                <div class="form-text">Allowed: JPG, JPEG, PNG, WEBP. Max size: 2 MB.</div>
+            </div>
+
             <div class="form-check mb-3">
                 <input asp-for="IsAvailable" class="form-check-input" />
                 <label asp-for="IsAvailable" class="form-check-label"></label>
@@ -67,4 +80,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function disableSubmitButton(form) {
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            const button = form.querySelector("button[type='submit']");
+
+            if (button) {
+                button.disabled = true;
+                button.innerText = "Saving...";
+            }
+        }
+    </script>
+}
 }
