@@ -29,6 +29,9 @@ namespace DineFlowRestaurantSystem.Controllers
             var dashboard = new AdminDashboardViewModel
             {
                 TotalUsers = _userService.GetTotalUserCount(),
+                TotalMenuItems = _menuService.GetTotalMenuItemCount(),
+                AvailableMenuItems = _menuService.GetAvailableMenuItemCount(),
+                TotalCategories = _menuService.GetTotalCategoryCount(),
                 TotalOrders = 0,
                 TotalSales = 0,
                 ActiveRole = SessionHelper.GetRole(HttpContext)

@@ -730,5 +730,47 @@ namespace DineFlowRestaurantSystem.Services
                 return count > 0;
             }
         }
+        public int GetTotalMenuItemCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = "SELECT COUNT(*) FROM MenuItems";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+        public int GetAvailableMenuItemCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM MenuItems
+        WHERE IsAvailable = 1";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+        public int GetTotalCategoryCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = "SELECT COUNT(*) FROM MenuCategories";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
     }
 }

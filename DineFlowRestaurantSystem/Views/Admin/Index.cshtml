@@ -4,7 +4,7 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <div class="col-md-3">
         <div class="card dashboard-card">
             <div class="card-body">
@@ -17,13 +17,42 @@
     <div class="col-md-3">
         <div class="card dashboard-card">
             <div class="card-body">
+                <h6 class="text-muted">Menu Items</h6>
+                <h2>@Model.TotalMenuItems</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Available Items</h6>
+                <h2>@Model.AvailableMenuItems</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Categories</h6>
+                <h2>@Model.TotalCategories</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body">
                 <h6 class="text-muted">Total Orders</h6>
                 <h2>@Model.TotalOrders</h2>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Sales</h6>
@@ -32,30 +61,11 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6 class="text-muted">Active Role</h6>
                 <h2>@Model.ActiveRole</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card dashboard-card">
-            <div class="card-header bg-white">
-                Quick Actions
-            </div>
-            <div class="card-body">
-                <a asp-controller="Admin" asp-action="Users" class="btn btn-primary me-2">
-                    Manage Users
-                </a>
-
-                <a asp-controller="Admin" asp-action="SalesReport" class="btn btn-outline-primary">
-                    View Sales Report
-                </a>
             </div>
         </div>
     </div>
