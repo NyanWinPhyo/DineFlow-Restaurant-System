@@ -1,0 +1,116 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.CartItemViewModel>
+
+@{
+    ViewData["Title"] = "Cart";
+
+    decimal cartTotal = Model.Sum(item => item.LineTotal);
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Your Cart</h2>
+            <p class="text-muted mb-0">Review your selected items, @ViewBag.Username.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Customer" asp-action="Menu" class="btn btn-outline-primary">
+                Back to Menu
+            </a>
+
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            Your cart is empty.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-body">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Image</th>
+                            <th>Item</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Line Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                                    {
+                                        <img src="@item.ImagePath"
+                                             alt="@item.ItemName"
+                                             class="menu-item-thumbnail" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No image</span>
+                                    }
+                                </td>
+
+                                <td>@item.ItemName</td>
+                                <td>@item.Price.ToString("C")</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.LineTotal.ToString("C")</td>
+
+                                <td>
+                                    <form asp-controller="Customer"
+                                          asp-action="RemoveFromCart"
+                                          asp-route-menuItemId="@item.MenuItemID"
+                                          method="post"
+                                          onsubmit="return confirm('Remove this item from cart?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <form asp-controller="Customer"
+                          asp-action="ClearCart"
+                          method="post"
+                          onsubmit="return confirm('Clear all items from cart?');">
+                        <button type="submit" class="btn btn-outline-danger">
+                            Clear Cart
+                        </button>
+                    </form>
+
+                    <div class="text-end">
+                        <h5>Total</h5>
+                        <h3>@cartTotal.ToString("C")</h3>
+
+                        <button class="btn btn-success mt-2" disabled>
+                            Place Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -33,13 +33,60 @@ VALUES
 ('Side Dishes');
 GO
 
-INSERT INTO MenuItems 
-(CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-VALUES
-(1, 'Chicken Chop', 'Grilled chicken served with fries and black pepper sauce.', 18.90, 1, 1),
-(1, 'Fried Rice', 'Classic fried rice with egg and vegetables.', 9.90, 1, 1),
-(2, 'Iced Lemon Tea', 'Cold lemon tea drink.', 4.50, 1, 1),
+IF NOT EXISTS (
+    SELECT 1 
+    FROM MenuItems 
+    WHERE CategoryID = 1 
+      AND ItemName = 'Chicken Chop'
+)
+BEGIN
+    INSERT INTO MenuItems 
+    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
+    VALUES
+(1, 'Chicken Chop', 'Grilled chicken served with fries and black pepper sauce.', 18.90, 1, 1);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 
+    FROM MenuItems 
+    WHERE CategoryID = 1 
+      AND ItemName = 'Chicken Chop'
+)
+BEGIN
+    INSERT INTO MenuItems 
+    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
+    VALUES
+(1, 'Fried Rice', 'Classic fried rice with egg and vegetables.', 9.90, 1, 1);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 
+    FROM MenuItems 
+    WHERE CategoryID = 1 
+      AND ItemName = 'Chicken Chop'
+)
+BEGIN
+    INSERT INTO MenuItems 
+    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
+    VALUES
+(2, 'Iced Lemon Tea', 'Cold lemon tea drink.', 4.50, 1, 1);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 
+    FROM MenuItems 
+    WHERE CategoryID = 1 
+      AND ItemName = 'Chicken Chop'
+)
+BEGIN
+    INSERT INTO MenuItems 
+    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
+    VALUES
 (3, 'Chocolate Cake', 'Slice of chocolate cake.', 7.90, 1, 1);
+END
 GO
 
 SELECT * FROM MenuCategories;

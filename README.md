@@ -1,7 +1,7 @@
 # DineFlow Restaurant System
 
 DineFlow is a restaurant management system built with ASP.NET Core MVC and SQL Server.  
-The project is designed as a full-stack portfolio project that demonstrates role-based access, user management, menu management, ordering, reporting, inventory tracking, and restaurant finance flow.
+The project is designed as a full-stack portfolio project that demonstrates role-based access, user management, menu management, customer ordering, inventory tracking, reservations, and restaurant finance flow.
 
 ## Tech Stack
 
@@ -18,9 +18,15 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Login system
 - Role-based redirection
 - Session-based access control
+- Access denied handling for unauthorized roles
 
 ### Admin Module
 - Admin dashboard
+- Dynamic dashboard statistics
+  - Total users
+  - Total menu items
+  - Available menu items
+  - Total menu categories
 - User management
 - Search users
 - Add new users
@@ -31,35 +37,63 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Customer wallet handling
 - Admin profile update
 
-### Menu Module
-- Menu category database table
-- Menu item database table
-- Menu item list page
-- Search menu items by name, category, or description
-
-## Planned Features
-
 ### Menu Management
+- Menu category management
+- Add menu categories
+- Edit menu categories
+- Activate and deactivate categories
+- Restricted hard delete for unused categories
+- Menu item management
 - Add menu items
 - Edit menu items
 - Mark menu items as available/unavailable
-- Manage menu categories
+- Restricted hard delete for unused menu items
+- Search menu items
+- Food image upload, replacement, and removal for menu items
 
 ### Customer Module
-- Browse available menu items
+- Customer menu browsing page
+- Menu items displayed by category
+- Food image display
+- Search available menu items
+- Hidden unavailable menu items
+- Hidden items from inactive categories
+
+## Database
+
+Current database tables:
+
+- Users
+- Customers
+- MenuCategories
+- MenuItems
+
+## Planned Features
+
+### Customer Ordering
+- Add to cart
+- Update cart quantity
 - Place orders
 - View order history
 - Wallet-based payment flow
 
 ### Chef Module
 - View incoming orders
-- Update order preparation status
-- Manage kitchen availability
+- Update preparation status
+- Mark menu items available/unavailable
+- View kitchen workload
 
 ### Manager Module
-- Manage menu items
+- Manage menu items and categories
+- View order status
 - View sales reports
 - Monitor restaurant operations
+
+### Sales and Reports
+- Total sales report
+- Order history report
+- Menu item performance report
+- Customer activity report
 
 ### Inventory System
 - Ingredient tracking
@@ -67,6 +101,7 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Menu item ingredient requirements
 - Automatic menu availability based on ingredient stock
 - Low-stock warnings
+- Ingredient restock records
 
 ### Restaurant Finance Tracker
 - Restaurant wallet/balance tracking
@@ -75,25 +110,11 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Inflow/outflow transaction history
 - Net revenue calculation
 
-## Database
-
-Current database:
-
-- Users
-- Customers
-- MenuCategories
-- MenuItems
-
-Future database tables may include:
-
-- Orders
-- OrderItems
-- Feedback
-- Ingredients
-- InventoryStock
-- MenuItemIngredients
-- RestockRecords
-- RestaurantTransactions
+### Reservation System
+- Customer reservation requests
+- Admin/Manager reservation management
+- Table assignment
+- Reservation status tracking
 
 ## Project Status
 
@@ -106,10 +127,13 @@ Completed so far:
 - Authentication and role routing
 - Admin user management
 - Admin profile management
-- Initial menu database and menu list page
+- Menu item and category management
+- Food image upload for menu items
+- Customer menu browsing page
 
 Next development focus:
 
-- Add menu item creation
-- Edit menu items
-- Menu availability control
+- Customer cart system
+- Order placement
+- Order database tables
+- Chef order dashboard

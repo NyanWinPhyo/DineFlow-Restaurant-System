@@ -835,5 +835,53 @@ namespace DineFlowRestaurantSystem.Services
 
             return menuItems;
         }
+        public CustomerMenuItemViewModel? GetAvailableMenuItemByIdForCustomer(int menuItemId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT
+            mi.MenuItemID,
+            mi.ItemName,
+            mi.Description,
+            mi.Price,
+            mi.ImagePath,
+            mc.CategoryName
+        FROM MenuItems mi
+        INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+        WHERE mi.MenuItemID = @menuItemId
+          AND mi.IsAvailable = 1
+          AND mc.IsActive = 1";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new CustomerMenuItemViewModel
+                        {
+                            MenuItemID = Convert.ToInt32(reader["MenuItemID"]),
+                            ItemName = reader["ItemName"].ToString() ?? "",
+                            Description = reader["Description"] == DBNull.Value
+                                ? ""
+                                : reader["Description"].ToString() ?? "",
+                            Price = Convert.ToDecimal(reader["Price"]),
+                            ImagePath = reader["ImagePath"] == DBNull.Value
+                                ? null
+                                : reader["ImagePath"].ToString(),
+                            CategoryName = reader["CategoryName"].ToString() ?? ""
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
     }
 }
