@@ -148,5 +148,55 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("Cart");
         }
+
+        [HttpPost]
+        public IActionResult UpdateCartQuantity(int menuItemId, int change)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            var cart = GetCart();
+
+            var cartItem = cart.FirstOrDefault(item => item.MenuItemID == menuItemId);
+
+            if (cartItem == null)
+            {
+                TempData["ErrorMessage"] = "Cart item not found.";
+                return RedirectToAction("Cart");
+            }
+
+            if (change > 0)
+            {
+                var menuItem = _menuService.GetAvailableMenuItemByIdForCustomer(menuItemId);
+
+                if (menuItem == null)
+                {
+                    TempData["ErrorMessage"] = "This item is no longer available.";
+                    return RedirectToAction("Cart");
+                }
+
+                cartItem.Quantity += 1;
+
+                cartItem.ItemName = menuItem.ItemName;
+                cartItem.Price = menuItem.Price;
+                cartItem.ImagePath = menuItem.ImagePath;
+            }
+            else if (change < 0)
+            {
+                cartItem.Quantity -= 1;
+
+                if (cartItem.Quantity <= 0)
+                {
+                    cart.Remove(cartItem);
+                }
+            }
+
+            SaveCart(cart);
+
+            return RedirectToAction("Cart");
+        }
     }
 }
