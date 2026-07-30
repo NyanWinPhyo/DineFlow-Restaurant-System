@@ -1,7 +1,7 @@
 ﻿using DineFlowRestaurantSystem.Helpers;
 using DineFlowRestaurantSystem.Services;
-using Microsoft.AspNetCore.Mvc;
 using DineFlowRestaurantSystem.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DineFlowRestaurantSystem.Controllers
 {
@@ -51,6 +51,20 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return View(menuItems);
         }
+        public IActionResult Cart()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var cart = GetCart();
+
+            return View(cart);
+        }
 
         [HttpPost]
         public IActionResult AddToCart(int menuItemId)
@@ -94,20 +108,6 @@ namespace DineFlowRestaurantSystem.Controllers
             TempData["SuccessMessage"] = $"{menuItem.ItemName} added to cart.";
 
             return RedirectToAction("Menu");
-        }
-        public IActionResult Cart()
-        {
-            if (!SessionHelper.IsLoggedIn(HttpContext))
-                return RedirectToAction("Login", "Auth");
-
-            if (!SessionHelper.HasRole(HttpContext, "Customer"))
-                return RedirectToAction("AccessDenied", "Auth");
-
-            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-
-            var cart = GetCart();
-
-            return View(cart);
         }
 
         [HttpPost]

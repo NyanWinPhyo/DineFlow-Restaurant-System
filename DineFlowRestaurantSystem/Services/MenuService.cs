@@ -840,18 +840,18 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT
-            mi.MenuItemID,
-            mi.ItemName,
-            mi.Description,
-            mi.Price,
-            mi.ImagePath,
-            mc.CategoryName
-        FROM MenuItems mi
-        INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
-        WHERE mi.MenuItemID = @menuItemId
-          AND mi.IsAvailable = 1
-          AND mc.IsActive = 1";
+                SELECT
+                    mi.MenuItemID,
+                    mi.ItemName,
+                    mi.Description,
+                    mi.Price,
+                    mi.ImagePath,
+                    mc.CategoryName
+                FROM MenuItems mi
+                INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+                WHERE mi.MenuItemID = @menuItemId
+                  AND mi.IsAvailable = 1
+                  AND mc.IsActive = 1";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
