@@ -58,6 +58,26 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Search available menu items
 - Hidden unavailable menu items
 - Hidden items from inactive categories
+- Customer cart using session storage
+- Add items to cart
+- Update cart quantity
+- Remove items from cart
+- Clear cart
+- Wallet balance display
+- Place orders using customer wallet balance
+- View order history
+- View order details and order status
+
+### Order Management
+- Order placement from customer cart
+- Wallet payment deduction during order placement
+- Order and order item database records
+- Order status tracking
+- Admin order list
+- Admin order detail view
+- Admin order status updates
+- Cancelled order wallet refund
+- Search and filter orders by customer, order ID, and status
 
 ## Database
 
@@ -67,15 +87,16 @@ Current database tables:
 - Customers
 - MenuCategories
 - MenuItems
+- Orders
+- OrderItems
 
 ## Planned Features
 
-### Customer Ordering
-- Add to cart
-- Update cart quantity
-- Place orders
-- View order history
-- Wallet-based payment flow
+### Customer Ordering Improvements
+- Improve customer layout/navigation
+- Add cart item notes or special requests
+- Add order cancellation request flow
+- Improve order status badges
 
 ### Chef Module
 - View incoming orders
@@ -95,6 +116,13 @@ Current database tables:
 - Menu item performance report
 - Customer activity report
 
+### Feedback and Reviews
+- Customer reviews for completed orders
+- One review per completed order
+- Rating and comment system
+- Admin/Manager feedback management
+- Optional admin/manager response to feedback
+- 
 ### Inventory System
 - Ingredient tracking
 - Ingredient stock levels
@@ -130,10 +158,17 @@ Completed so far:
 - Menu item and category management
 - Food image upload for menu items
 - Customer menu browsing page
+- Customer cart system
+- Customer order placement
+- Customer wallet payment deduction
+- Customer order tracking
+- Admin order management
+- Admin order status updates and refund handling
 
 Next development focus:
 
-- Customer cart system
-- Order placement
-- Order database tables
 - Chef order dashboard
+- Chef order status workflow
+- Kitchen-focused order view
+- Manager module foundation
+- Sales report and dashboard analytics
