@@ -26,6 +26,14 @@
         </div>
 
         <div class="d-flex gap-2">
+            <span class="btn btn-outline-success disabled">
+                Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
+            </span>
+
+            <a asp-controller="Customer" asp-action="Orders" class="btn btn-outline-secondary">
+                My Orders
+            </a>
+
             <a asp-controller="Customer" asp-action="Cart" class="btn btn-outline-primary">
                 View Cart
             </a>

@@ -1,0 +1,82 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.CustomerOrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Order #@Model.OrderID</h2>
+            <p class="text-muted mb-0">
+                Placed on @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <span class="btn btn-outline-success disabled">
+                Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
+            </span>
+
+            <a asp-controller="Customer" asp-action="Orders" class="btn btn-outline-primary">
+                Back to Orders
+            </a>
+
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Status</h5>
+
+            <p class="mb-1">
+                Order Status:
+                <span class="badge bg-primary">@Model.OrderStatus</span>
+            </p>
+
+            <p class="mb-0">
+                Payment Status:
+                <span class="badge bg-success">@Model.PaymentStatus</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Items</h5>
+        </div>
+
+        <div class="card-body">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>@item.UnitPrice.ToString("C")</td>
+                            <td>@item.Quantity</td>
+                            <td>@item.LineTotal.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="text-end">
+                <h5>Total</h5>
+                <h3>@Model.TotalAmount.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+</div>

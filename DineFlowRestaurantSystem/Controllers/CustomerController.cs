@@ -8,6 +8,7 @@ namespace DineFlowRestaurantSystem.Controllers
     public class CustomerController : Controller
     {
         private readonly MenuService _menuService;
+        private readonly OrderService _orderService;
 
         private List<CartItemViewModel> GetCart()
         {
@@ -20,9 +21,10 @@ namespace DineFlowRestaurantSystem.Controllers
             SessionJsonHelper.SetObject(HttpContext.Session, "Cart", cart);
         }
 
-        public CustomerController(MenuService menuService)
+        public CustomerController(MenuService menuService, OrderService orderService)
         {
             _menuService = menuService;
+            _orderService = orderService;
         }
 
         public IActionResult Index()
@@ -44,8 +46,11 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Customer"))
                 return RedirectToAction("AccessDenied", "Auth");
 
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
             ViewBag.SearchTerm = searchTerm;
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
 
             var menuItems = _menuService.GetAvailableMenuItemsForCustomer(searchTerm);
 
@@ -59,11 +64,74 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Customer"))
                 return RedirectToAction("AccessDenied", "Auth");
 
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
 
             var cart = GetCart();
 
             return View(cart);
+        }
+        public IActionResult OrderConfirmation(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            if (!_orderService.OrderBelongsToCustomer(id, customerId))
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.OrderID = id;
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
+
+            return View();
+        }
+        public IActionResult Orders()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
+
+            var orders = _orderService.GetCustomerOrders(customerId);
+
+            return View(orders);
+        }
+        public IActionResult OrderDetails(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
+
+            var order = _orderService.GetCustomerOrderDetail(id, customerId);
+
+            if (order == null)
+            {
+                return RedirectToAction("AccessDenied", "Auth");
+            }
+
+            return View(order);
         }
 
         [HttpPost]
@@ -197,6 +265,36 @@ namespace DineFlowRestaurantSystem.Controllers
             SaveCart(cart);
 
             return RedirectToAction("Cart");
+        }
+
+        [HttpPost]
+        public IActionResult PlaceOrder()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            var cart = GetCart();
+
+            try
+            {
+                int orderId = _orderService.PlaceOrder(customerId, cart);
+
+                HttpContext.Session.Remove("Cart");
+
+                TempData["SuccessMessage"] = $"Order #{orderId} placed successfully.";
+
+                return RedirectToAction("OrderConfirmation", new { id = orderId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Cart");
+            }
         }
     }
 }

@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Order Confirmed";
+}
+
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-body text-center p-5">
+            <h2 class="mb-3">Order Confirmed</h2>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            <p class="text-muted">
+                Thank you, @ViewBag.Username. Your order has been sent to the kitchen.
+            </p>
+
+            <h4 class="my-4">
+                Order Number: #@ViewBag.OrderID
+            </h4>
+
+            <div class="d-flex justify-content-center gap-2">
+                <span class="btn btn-outline-success disabled">
+                    Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
+                </span>
+
+                <a asp-controller="Customer" asp-action="Menu" class="btn btn-primary">
+                    Back to Menu
+                </a>
+
+                <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

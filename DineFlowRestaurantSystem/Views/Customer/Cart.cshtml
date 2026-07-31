@@ -14,6 +14,10 @@
         </div>
 
         <div class="d-flex gap-2">
+            <span class="btn btn-outline-success disabled">
+                Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
+            </span>
+
             <a asp-controller="Customer" asp-action="Menu" class="btn btn-outline-primary">
                 Back to Menu
             </a>
@@ -136,9 +140,14 @@
                         <h5>Total</h5>
                         <h3>@cartTotal.ToString("C")</h3>
 
-                        <button class="btn btn-success mt-2" disabled>
-                            Place Order
-                        </button>
+                        <form asp-controller="Customer"
+                              asp-action="PlaceOrder"
+                              method="post"
+                              onsubmit="return confirm('Place this order?');">
+                            <button type="submit" class="btn btn-success mt-2">
+                                Place Order
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
