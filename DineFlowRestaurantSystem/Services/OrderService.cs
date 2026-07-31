@@ -321,5 +321,256 @@ namespace DineFlowRestaurantSystem.Services
 
             return order;
         }
+        public List<AdminOrderListItemViewModel> GetAllOrders(string? statusFilter = null, string? searchTerm = null)
+        {
+            List<AdminOrderListItemViewModel> orders = new List<AdminOrderListItemViewModel>();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT 
+            o.OrderID,
+            o.OrderDate,
+            o.TotalAmount,
+            o.OrderStatus,
+            o.PaymentStatus,
+            u.Username AS CustomerName,
+            u.LoginID AS CustomerLoginID
+        FROM Orders o
+        INNER JOIN Users u ON o.CustomerID = u.UserID
+        WHERE
+            (@statusFilter IS NULL OR o.OrderStatus = @statusFilter)
+            AND
+            (
+                @searchTerm IS NULL
+                OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
+                OR u.Username LIKE @searchTerm
+                OR u.LoginID LIKE @searchTerm
+            )
+        ORDER BY o.OrderDate DESC";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (string.IsNullOrWhiteSpace(statusFilter))
+                {
+                    cmd.Parameters.AddWithValue("@statusFilter", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@statusFilter", statusFilter);
+                }
+
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        orders.Add(new AdminOrderListItemViewModel
+                        {
+                            OrderID = Convert.ToInt32(reader["OrderID"]),
+                            OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                            TotalAmount = Convert.ToDecimal(reader["TotalAmount"]),
+                            OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                            PaymentStatus = reader["PaymentStatus"].ToString() ?? "",
+                            CustomerName = reader["CustomerName"].ToString() ?? "",
+                            CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                        });
+                    }
+                }
+            }
+
+            return orders;
+        }
+        public AdminOrderDetailViewModel? GetAdminOrderDetail(int orderId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            AdminOrderDetailViewModel? order = null;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string orderQuery = @"
+            SELECT 
+                o.OrderID,
+                o.CustomerID,
+                o.OrderDate,
+                o.TotalAmount,
+                o.OrderStatus,
+                o.PaymentStatus,
+                u.Username AS CustomerName,
+                u.LoginID AS CustomerLoginID
+            FROM Orders o
+            INNER JOIN Users u ON o.CustomerID = u.UserID
+            WHERE o.OrderID = @orderId";
+
+                using (SqlCommand cmd = new SqlCommand(orderQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            order = new AdminOrderDetailViewModel
+                            {
+                                OrderID = Convert.ToInt32(reader["OrderID"]),
+                                CustomerID = Convert.ToInt32(reader["CustomerID"]),
+                                OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                                TotalAmount = Convert.ToDecimal(reader["TotalAmount"]),
+                                OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                                PaymentStatus = reader["PaymentStatus"].ToString() ?? "",
+                                CustomerName = reader["CustomerName"].ToString() ?? "",
+                                CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                            };
+                        }
+                    }
+                }
+
+                if (order == null)
+                {
+                    return null;
+                }
+
+                string itemsQuery = @"
+            SELECT ItemName, UnitPrice, Quantity, LineTotal
+            FROM OrderItems
+            WHERE OrderID = @orderId";
+
+                using (SqlCommand cmd = new SqlCommand(itemsQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            order.Items.Add(new AdminOrderItemViewModel
+                            {
+                                ItemName = reader["ItemName"].ToString() ?? "",
+                                UnitPrice = Convert.ToDecimal(reader["UnitPrice"]),
+                                Quantity = Convert.ToInt32(reader["Quantity"]),
+                                LineTotal = Convert.ToDecimal(reader["LineTotal"])
+                            });
+                        }
+                    }
+                }
+            }
+
+            return order;
+        }
+        public void UpdateOrderStatus(int orderId, string newStatus)
+        {
+            string[] validStatuses = { "Pending", "Preparing", "Completed", "Cancelled" };
+
+            if (!validStatuses.Contains(newStatus))
+            {
+                throw new Exception("Invalid order status.");
+            }
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string orderQuery = @"
+                    SELECT CustomerID, TotalAmount, OrderStatus, PaymentStatus
+                    FROM Orders WITH (UPDLOCK, ROWLOCK)
+                    WHERE OrderID = @orderId";
+
+                        int customerId;
+                        decimal totalAmount;
+                        string currentStatus;
+                        string paymentStatus;
+
+                        using (SqlCommand cmd = new SqlCommand(orderQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                            using (SqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                {
+                                    throw new Exception("Order not found.");
+                                }
+
+                                customerId = Convert.ToInt32(reader["CustomerID"]);
+                                totalAmount = Convert.ToDecimal(reader["TotalAmount"]);
+                                currentStatus = reader["OrderStatus"].ToString() ?? "";
+                                paymentStatus = reader["PaymentStatus"].ToString() ?? "";
+                            }
+                        }
+
+                        if (currentStatus == "Cancelled")
+                        {
+                            throw new Exception("Cancelled orders cannot be updated.");
+                        }
+
+                        if (currentStatus == "Completed" && newStatus == "Cancelled")
+                        {
+                            throw new Exception("Completed orders cannot be cancelled.");
+                        }
+
+                        string newPaymentStatus = paymentStatus;
+
+                        if (newStatus == "Cancelled" && paymentStatus == "Paid")
+                        {
+                            string refundQuery = @"
+                        UPDATE Customers
+                        SET WalletBalance = WalletBalance + @refundAmount
+                        WHERE CustomerID = @customerId";
+
+                            using (SqlCommand cmd = new SqlCommand(refundQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@refundAmount", totalAmount);
+                                cmd.Parameters.AddWithValue("@customerId", customerId);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            newPaymentStatus = "Refunded";
+                        }
+
+                        string updateOrderQuery = @"
+                    UPDATE Orders
+                    SET OrderStatus = @newStatus,
+                        PaymentStatus = @paymentStatus
+                    WHERE OrderID = @orderId";
+
+                        using (SqlCommand cmd = new SqlCommand(updateOrderQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue("@newStatus", newStatus);
+                            cmd.Parameters.AddWithValue("@paymentStatus", newPaymentStatus);
+                            cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
     }
 }

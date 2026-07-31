@@ -1,0 +1,116 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.AdminOrderDetailViewModel
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Order Details";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="card dashboard-card mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Order #@Model.OrderID</h5>
+
+        <a asp-controller="Admin" asp-action="Orders" class="btn btn-secondary btn-sm">
+            Back to Orders
+        </a>
+    </div>
+
+    <div class="card-body">
+        <p><strong>Customer:</strong> @Model.CustomerName (@Model.CustomerLoginID)</p>
+        <p><strong>Date:</strong> @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</p>
+        <p><strong>Total:</strong> @Model.TotalAmount.ToString("C")</p>
+        <p><strong>Order Status:</strong> <span class="badge bg-primary">@Model.OrderStatus</span></p>
+        <p><strong>Payment Status:</strong> <span class="badge bg-success">@Model.PaymentStatus</span></p>
+
+        @if (Model.OrderStatus != "Cancelled" && Model.OrderStatus != "Completed")
+        {
+            <hr />
+
+            <h6>Update Order Status</h6>
+
+            <div class="d-flex gap-2">
+                @if (Model.OrderStatus == "Pending")
+                {
+                    <form asp-controller="Admin"
+                          asp-action="UpdateOrderStatus"
+                          asp-route-id="@Model.OrderID"
+                          asp-route-newStatus="Preparing"
+                          method="post">
+                        <button type="submit" class="btn btn-outline-primary">
+                            Mark Preparing
+                        </button>
+                    </form>
+                }
+
+                @if (Model.OrderStatus == "Pending" || Model.OrderStatus == "Preparing")
+                {
+                    <form asp-controller="Admin"
+                          asp-action="UpdateOrderStatus"
+                          asp-route-id="@Model.OrderID"
+                          asp-route-newStatus="Completed"
+                          method="post"
+                          onsubmit="return confirm('Mark this order as completed?');">
+                        <button type="submit" class="btn btn-outline-success">
+                            Mark Completed
+                        </button>
+                    </form>
+
+                    <form asp-controller="Admin"
+                          asp-action="UpdateOrderStatus"
+                          asp-route-id="@Model.OrderID"
+                          asp-route-newStatus="Cancelled"
+                          method="post"
+                          onsubmit="return confirm('Cancel this order and refund the customer wallet?');">
+                        <button type="submit" class="btn btn-outline-danger">
+                            Cancel & Refund
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card dashboard-card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Order Items</h5>
+    </div>
+
+    <div class="card-body">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Item</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Line Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.ItemName</td>
+                        <td>@item.UnitPrice.ToString("C")</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.LineTotal.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
