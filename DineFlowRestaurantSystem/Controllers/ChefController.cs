@@ -7,10 +7,12 @@ namespace DineFlowRestaurantSystem.Controllers
     public class ChefController : Controller
     {
         private readonly OrderService _orderService;
+        private readonly FeedbackService _feedbackService;
 
-        public ChefController(OrderService orderService)
+        public ChefController(OrderService orderService, FeedbackService feedbackService)
         {
             _orderService = orderService;
+            _feedbackService = feedbackService;
         }
 
         public IActionResult Index(string? statusFilter, string? searchTerm)
@@ -49,6 +51,22 @@ namespace DineFlowRestaurantSystem.Controllers
             }
 
             return View(order);
+        }
+        public IActionResult Reviews(string? searchTerm, int? ratingFilter)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.RatingFilter = ratingFilter;
+
+            var reviews = _feedbackService.GetReviewsForStaff(searchTerm, ratingFilter);
+
+            return View(reviews);
         }
 
         [HttpPost]

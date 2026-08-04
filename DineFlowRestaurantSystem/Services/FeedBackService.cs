@@ -102,5 +102,88 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public List<ReviewListItemViewModel> GetReviewsForStaff(string? searchTerm = null, int? ratingFilter = null)
+        {
+            List<ReviewListItemViewModel> reviews = new List<ReviewListItemViewModel>();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    f.FeedbackID,
+                    f.OrderID,
+                    f.Rating,
+                    f.Comment,
+                    f.AdminResponse,
+                    f.CreatedAt,
+                    o.OrderDate,
+                    o.OrderStatus,
+                    u.Username AS CustomerName,
+                    u.LoginID AS CustomerLoginID
+                FROM Feedback f
+                INNER JOIN Orders o ON f.OrderID = o.OrderID
+                INNER JOIN Users u ON f.CustomerID = u.UserID
+                WHERE
+                    (@ratingFilter IS NULL OR f.Rating = @ratingFilter)
+                    AND
+                    (
+                        @searchTerm IS NULL
+                        OR CAST(f.OrderID AS VARCHAR(20)) LIKE @searchTerm
+                        OR u.Username LIKE @searchTerm
+                        OR u.LoginID LIKE @searchTerm
+                        OR f.Comment LIKE @searchTerm
+                    )
+                ORDER BY f.CreatedAt DESC";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (ratingFilter == null)
+                {
+                    cmd.Parameters.AddWithValue("@ratingFilter", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@ratingFilter", ratingFilter.Value);
+                }
+
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        reviews.Add(new ReviewListItemViewModel
+                        {
+                            FeedbackID = Convert.ToInt32(reader["FeedbackID"]),
+                            OrderID = Convert.ToInt32(reader["OrderID"]),
+                            Rating = Convert.ToInt32(reader["Rating"]),
+                            Comment = reader["Comment"] == DBNull.Value
+                                ? ""
+                                : reader["Comment"].ToString() ?? "",
+                            AdminResponse = reader["AdminResponse"] == DBNull.Value
+                                ? null
+                                : reader["AdminResponse"].ToString(),
+                            CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
+                            OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                            OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                            CustomerName = reader["CustomerName"].ToString() ?? "",
+                            CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                        });
+                    }
+                }
+            }
+
+            return reviews;
+        }
     }
 }
