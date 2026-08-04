@@ -766,7 +766,7 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("OrderDetails", new { id });
         }
-        public IActionResult Feedback(string? searchTerm, int? ratingFilter)
+        public IActionResult Feedback(string? searchTerm, int? ratingFilter, bool? reviewedFilter)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
                 return RedirectToAction("Login", "Auth");
@@ -777,8 +777,9 @@ namespace DineFlowRestaurantSystem.Controllers
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
             ViewBag.SearchTerm = searchTerm;
             ViewBag.RatingFilter = ratingFilter;
+            ViewBag.ReviewedFilter = reviewedFilter;
 
-            var reviews = _feedbackService.GetReviewsForStaff(searchTerm, ratingFilter);
+            var reviews = _feedbackService.GetReviewsForStaff(searchTerm, ratingFilter, reviewedFilter);
 
             return View(reviews);
         }

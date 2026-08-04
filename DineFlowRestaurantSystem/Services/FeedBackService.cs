@@ -102,7 +102,7 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
-        public List<ReviewListItemViewModel> GetReviewsForStaff(string? searchTerm = null, int? ratingFilter = null)
+        public List<ReviewListItemViewModel> GetReviewsForStaff(string? searchTerm = null, int? ratingFilter = null, bool? reviewedFilter = null)
         {
             List<ReviewListItemViewModel> reviews = new List<ReviewListItemViewModel>();
 
@@ -129,6 +129,7 @@ namespace DineFlowRestaurantSystem.Services
                 LEFT JOIN Users ru ON f.RespondedByUserID = ru.UserID
                 WHERE
                     (@ratingFilter IS NULL OR f.Rating = @ratingFilter)
+                    AND (@reviewedFilter IS NULL OR f.IsReviewed = @reviewedFilter)
                     AND
                     (
                         @searchTerm IS NULL
@@ -158,6 +159,15 @@ namespace DineFlowRestaurantSystem.Services
                 else
                 {
                     cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                if (reviewedFilter == null)
+                {
+                    cmd.Parameters.AddWithValue("@reviewedFilter", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@reviewedFilter", reviewedFilter.Value);
                 }
 
                 conn.Open();

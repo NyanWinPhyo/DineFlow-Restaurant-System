@@ -22,7 +22,7 @@
 <div class="card dashboard-card mb-4">
     <div class="card-body">
         <form asp-controller="Admin" asp-action="Feedback" method="get" class="row g-2">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <input type="text"
                        name="searchTerm"
                        value="@ViewBag.SearchTerm"
@@ -42,6 +42,14 @@
             </div>
 
             <div class="col-md-3">
+                <select name="reviewedFilter" class="form-select">
+                    <option value="">All Review Statuses</option>
+                    <option value="false" selected="@(ViewBag.ReviewedFilter == false)">Pending Review</option>
+                    <option value="true" selected="@(ViewBag.ReviewedFilter == true)">Reviewed</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">
                     Filter
                 </button>
