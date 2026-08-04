@@ -9,6 +9,7 @@ namespace DineFlowRestaurantSystem.Controllers
     {
         private readonly MenuService _menuService;
         private readonly OrderService _orderService;
+        private readonly FeedbackService _feedbackService;
 
         private List<CartItemViewModel> GetCart()
         {
@@ -21,10 +22,11 @@ namespace DineFlowRestaurantSystem.Controllers
             SessionJsonHelper.SetObject(HttpContext.Session, "Cart", cart);
         }
 
-        public CustomerController(MenuService menuService, OrderService orderService)
+        public CustomerController(MenuService menuService, OrderService orderService, FeedbackService feedbackService)
         {
             _menuService = menuService;
             _orderService = orderService;
+            _feedbackService = feedbackService;
         }
 
         public IActionResult Index()
@@ -294,6 +296,69 @@ namespace DineFlowRestaurantSystem.Controllers
             {
                 TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction("Cart");
+            }
+        }
+
+        [HttpGet]
+        public IActionResult LeaveReview(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            var reviewCheck = _feedbackService.CanCustomerReviewOrder(id, customerId);
+
+            if (!reviewCheck.CanReview)
+            {
+                TempData["ErrorMessage"] = reviewCheck.Message;
+                return RedirectToAction("Orders");
+            }
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
+
+            var model = new ReviewFormViewModel
+            {
+                OrderID = id,
+                Rating = 5
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult LeaveReview(ReviewFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Customer"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _feedbackService.AddFeedback(customerId, model);
+                TempData["SuccessMessage"] = "Thank you for your review.";
+                return RedirectToAction("Orders");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
             }
         }
     }

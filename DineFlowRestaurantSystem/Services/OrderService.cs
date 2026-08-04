@@ -222,10 +222,20 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-                SELECT OrderID, OrderDate, TotalAmount, OrderStatus, PaymentStatus
-                FROM Orders
-                WHERE CustomerID = @customerId
-                ORDER BY OrderDate DESC";
+                SELECT 
+                    o.OrderID, 
+                    o.OrderDate, 
+                    o.TotalAmount, 
+                    o.OrderStatus, 
+                    o.PaymentStatus,
+                    CASE 
+                        WHEN f.FeedbackID IS NULL THEN CAST(0 AS BIT)
+                        ELSE CAST(1 AS BIT)
+                    END AS HasFeedback
+                FROM Orders o
+                LEFT JOIN Feedback f ON o.OrderID = f.OrderID
+                WHERE o.CustomerID = @customerId
+                ORDER BY o.OrderDate DESC";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -244,7 +254,8 @@ namespace DineFlowRestaurantSystem.Services
                             OrderDate = Convert.ToDateTime(reader["OrderDate"]),
                             TotalAmount = Convert.ToDecimal(reader["TotalAmount"]),
                             OrderStatus = reader["OrderStatus"].ToString() ?? "",
-                            PaymentStatus = reader["PaymentStatus"].ToString() ?? ""
+                            PaymentStatus = reader["PaymentStatus"].ToString() ?? "",
+                            HasFeedback = Convert.ToBoolean(reader["HasFeedback"])
                         });
                     }
                 }
@@ -263,10 +274,10 @@ namespace DineFlowRestaurantSystem.Services
                 conn.Open();
 
                 string orderQuery = @"
-            SELECT OrderID, OrderDate, TotalAmount, OrderStatus, PaymentStatus
-            FROM Orders
-            WHERE OrderID = @orderId
-              AND CustomerID = @customerId";
+                    SELECT OrderID, OrderDate, TotalAmount, OrderStatus, PaymentStatus
+                    FROM Orders
+                    WHERE OrderID = @orderId
+                      AND CustomerID = @customerId";
 
                 using (SqlCommand cmd = new SqlCommand(orderQuery, conn))
                 {
@@ -328,26 +339,26 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT 
-            o.OrderID,
-            o.OrderDate,
-            o.TotalAmount,
-            o.OrderStatus,
-            o.PaymentStatus,
-            u.Username AS CustomerName,
-            u.LoginID AS CustomerLoginID
-        FROM Orders o
-        INNER JOIN Users u ON o.CustomerID = u.UserID
-        WHERE
-            (@statusFilter IS NULL OR o.OrderStatus = @statusFilter)
-            AND
-            (
-                @searchTerm IS NULL
-                OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
-                OR u.Username LIKE @searchTerm
-                OR u.LoginID LIKE @searchTerm
-            )
-        ORDER BY o.OrderDate DESC";
+                SELECT 
+                    o.OrderID,
+                    o.OrderDate,
+                    o.TotalAmount,
+                    o.OrderStatus,
+                    o.PaymentStatus,
+                    u.Username AS CustomerName,
+                    u.LoginID AS CustomerLoginID
+                FROM Orders o
+                INNER JOIN Users u ON o.CustomerID = u.UserID
+                WHERE
+                    (@statusFilter IS NULL OR o.OrderStatus = @statusFilter)
+                    AND
+                    (
+                        @searchTerm IS NULL
+                        OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
+                        OR u.Username LIKE @searchTerm
+                        OR u.LoginID LIKE @searchTerm
+                    )
+                ORDER BY o.OrderDate DESC";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -403,18 +414,18 @@ namespace DineFlowRestaurantSystem.Services
                 conn.Open();
 
                 string orderQuery = @"
-            SELECT 
-                o.OrderID,
-                o.CustomerID,
-                o.OrderDate,
-                o.TotalAmount,
-                o.OrderStatus,
-                o.PaymentStatus,
-                u.Username AS CustomerName,
-                u.LoginID AS CustomerLoginID
-            FROM Orders o
-            INNER JOIN Users u ON o.CustomerID = u.UserID
-            WHERE o.OrderID = @orderId";
+                    SELECT 
+                        o.OrderID,
+                        o.CustomerID,
+                        o.OrderDate,
+                        o.TotalAmount,
+                        o.OrderStatus,
+                        o.PaymentStatus,
+                        u.Username AS CustomerName,
+                        u.LoginID AS CustomerLoginID
+                    FROM Orders o
+                    INNER JOIN Users u ON o.CustomerID = u.UserID
+                    WHERE o.OrderID = @orderId";
 
                 using (SqlCommand cmd = new SqlCommand(orderQuery, conn))
                 {
@@ -445,9 +456,9 @@ namespace DineFlowRestaurantSystem.Services
                 }
 
                 string itemsQuery = @"
-            SELECT ItemName, UnitPrice, Quantity, LineTotal
-            FROM OrderItems
-            WHERE OrderID = @orderId";
+                    SELECT ItemName, UnitPrice, Quantity, LineTotal
+                    FROM OrderItems
+                    WHERE OrderID = @orderId";
 
                 using (SqlCommand cmd = new SqlCommand(itemsQuery, conn))
                 {
@@ -491,9 +502,9 @@ namespace DineFlowRestaurantSystem.Services
                     try
                     {
                         string orderQuery = @"
-                    SELECT CustomerID, TotalAmount, OrderStatus, PaymentStatus
-                    FROM Orders WITH (UPDLOCK, ROWLOCK)
-                    WHERE OrderID = @orderId";
+                            SELECT CustomerID, TotalAmount, OrderStatus, PaymentStatus
+                            FROM Orders WITH (UPDLOCK, ROWLOCK)
+                            WHERE OrderID = @orderId";
 
                         int customerId;
                         decimal totalAmount;
@@ -533,9 +544,9 @@ namespace DineFlowRestaurantSystem.Services
                         if (newStatus == "Cancelled" && paymentStatus == "Paid")
                         {
                             string refundQuery = @"
-                        UPDATE Customers
-                        SET WalletBalance = WalletBalance + @refundAmount
-                        WHERE CustomerID = @customerId";
+                                UPDATE Customers
+                                SET WalletBalance = WalletBalance + @refundAmount
+                                WHERE CustomerID = @customerId";
 
                             using (SqlCommand cmd = new SqlCommand(refundQuery, conn, transaction))
                             {
@@ -548,10 +559,10 @@ namespace DineFlowRestaurantSystem.Services
                         }
 
                         string updateOrderQuery = @"
-                    UPDATE Orders
-                    SET OrderStatus = @newStatus,
-                        PaymentStatus = @paymentStatus
-                    WHERE OrderID = @orderId";
+                            UPDATE Orders
+                            SET OrderStatus = @newStatus,
+                                PaymentStatus = @paymentStatus
+                            WHERE OrderID = @orderId";
 
                         using (SqlCommand cmd = new SqlCommand(updateOrderQuery, conn, transaction))
                         {
@@ -579,30 +590,30 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT 
-            o.OrderID,
-            o.OrderDate,
-            o.TotalAmount,
-            o.OrderStatus,
-            o.PaymentStatus,
-            u.Username AS CustomerName,
-            u.LoginID AS CustomerLoginID
-        FROM Orders o
-        INNER JOIN Users u ON o.CustomerID = u.UserID
-        WHERE
-            (
-                (@statusFilter IS NULL AND o.OrderStatus IN ('Pending', 'Preparing'))
-                OR
-                (@statusFilter IS NOT NULL AND o.OrderStatus = @statusFilter)
-            )
-            AND
-            (
-                @searchTerm IS NULL
-                OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
-                OR u.Username LIKE @searchTerm
-                OR u.LoginID LIKE @searchTerm
-            )
-        ORDER BY o.OrderDate ASC";
+                SELECT 
+                    o.OrderID,
+                    o.OrderDate,
+                    o.TotalAmount,
+                    o.OrderStatus,
+                    o.PaymentStatus,
+                    u.Username AS CustomerName,
+                    u.LoginID AS CustomerLoginID
+                FROM Orders o
+                INNER JOIN Users u ON o.CustomerID = u.UserID
+                WHERE
+                    (
+                        (@statusFilter IS NULL AND o.OrderStatus IN ('Pending', 'Preparing'))
+                        OR
+                        (@statusFilter IS NOT NULL AND o.OrderStatus = @statusFilter)
+                    )
+                    AND
+                    (
+                        @searchTerm IS NULL
+                        OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
+                        OR u.Username LIKE @searchTerm
+                        OR u.LoginID LIKE @searchTerm
+                    )
+                ORDER BY o.OrderDate ASC";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))

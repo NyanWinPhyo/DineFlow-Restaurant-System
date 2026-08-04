@@ -11,5 +11,7 @@
         public string OrderStatus { get; set; } = string.Empty;
 
         public string PaymentStatus { get; set; } = string.Empty;
+
+        public bool HasFeedback { get; set; }
     }
 }

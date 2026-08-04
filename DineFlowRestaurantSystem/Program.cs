@@ -9,6 +9,7 @@ builder.Services.AddScoped<DineFlowRestaurantSystem.Services.UserService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.AuthService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.MenuService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.OrderService>();
+builder.Services.AddScoped<DineFlowRestaurantSystem.Services.FeedbackService>();
 
 var app = builder.Build();
 
