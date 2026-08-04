@@ -1,0 +1,167 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.MenuItemListItemViewModel>
+
+@{
+    ViewData["Title"] = "Chef Menu Management";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Menu Management</h2>
+            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Manage food items and kitchen availability.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Chef" asp-action="Index" class="btn btn-outline-primary">
+                Kitchen Dashboard
+            </a>
+
+            <a asp-controller="Chef" asp-action="Reviews" class="btn btn-outline-secondary">
+                Reviews
+            </a>
+
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-controller="Chef" asp-action="MenuItems" method="get" class="d-flex gap-2">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Search by item name, category, or description..." />
+
+                <button type="submit" class="btn btn-primary">
+                    Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Menu Item List</h5>
+
+            <a asp-controller="Chef" asp-action="AddMenuItem" class="btn btn-primary btn-sm">
+                Add Menu Item
+            </a>
+        </div>
+
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <p class="text-muted mb-0">No menu items found.</p>
+            }
+            else
+            {
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Image</th>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Availability</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                                    {
+                                        <img src="@item.ImagePath"
+                                             alt="@item.ItemName"
+                                             class="menu-item-thumbnail" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No image</span>
+                                    }
+                                </td>
+
+                                <td>@item.ItemName</td>
+                                <td>@item.CategoryName</td>
+                                <td>@item.Description</td>
+                                <td>@item.Price.ToString("C")</td>
+
+                                <td>
+                                    @if (item.IsAvailable)
+                                    {
+                                        <span class="badge bg-success">Available</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unavailable</span>
+                                    }
+                                </td>
+
+                                <td>@item.CreatedByUsername</td>
+
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-controller="Chef"
+                                           asp-action="EditMenuItem"
+                                           asp-route-id="@item.MenuItemID"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        @if (item.IsAvailable)
+                                        {
+                                            <form asp-controller="Chef"
+                                                  asp-action="SetMenuItemAvailability"
+                                                  asp-route-id="@item.MenuItemID"
+                                                  asp-route-isAvailable="false"
+                                                  method="post"
+                                                  onsubmit="return confirm('Mark this menu item as unavailable?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Mark Unavailable
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Chef"
+                                                  asp-action="SetMenuItemAvailability"
+                                                  asp-route-id="@item.MenuItemID"
+                                                  asp-route-isAvailable="true"
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Mark Available
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

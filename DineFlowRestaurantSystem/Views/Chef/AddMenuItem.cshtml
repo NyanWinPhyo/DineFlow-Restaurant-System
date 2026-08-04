@@ -1,0 +1,107 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.MenuItemFormViewModel
+
+@{
+    ViewData["Title"] = "Add Menu Item";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Add Menu Item</h2>
+            <p class="text-muted mb-0">Create a new food or drink item.</p>
+        </div>
+
+        <a asp-controller="Chef" asp-action="MenuItems" class="btn btn-outline-primary">
+            Back to Menu Items
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-controller="Chef"
+                  asp-action="AddMenuItem"
+                  method="post"
+                  enctype="multipart/form-data"
+                  onsubmit="disableSubmitButton(this)">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="ItemName" class="form-label"></label>
+                    <input asp-for="ItemName" class="form-control" />
+                    <span asp-validation-for="ItemName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryID" class="form-label"></label>
+                    <select asp-for="CategoryID" class="form-select">
+                        <option value="0">-- Select Category --</option>
+
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.CategoryID">
+                                @category.CategoryName
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryID" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Price" class="form-label"></label>
+                    <input asp-for="Price" class="form-control" min="0.01" step="0.01" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ImageFile" class="form-label"></label>
+                    <input asp-for="ImageFile"
+                           type="file"
+                           class="form-control"
+                           accept=".jpg,.jpeg,.png,.webp" />
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    <div class="form-text">Allowed: JPG, JPEG, PNG, WEBP. Max size: 2 MB.</div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input asp-for="IsAvailable" class="form-check-input" />
+                    <label asp-for="IsAvailable" class="form-check-label"></label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Add Menu Item
+                    </button>
+
+                    <a asp-controller="Chef" asp-action="MenuItems" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function disableSubmitButton(form) {
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            const button = form.querySelector("button[type='submit']");
+
+            if (button) {
+                button.disabled = true;
+                button.innerText = "Saving...";
+            }
+        }
+    </script>
+}

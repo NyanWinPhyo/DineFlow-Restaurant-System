@@ -1,5 +1,6 @@
 ﻿using DineFlowRestaurantSystem.Helpers;
 using DineFlowRestaurantSystem.Services;
+using DineFlowRestaurantSystem.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DineFlowRestaurantSystem.Controllers
@@ -8,11 +9,13 @@ namespace DineFlowRestaurantSystem.Controllers
     {
         private readonly OrderService _orderService;
         private readonly FeedbackService _feedbackService;
+        private readonly MenuService _menuService;
 
-        public ChefController(OrderService orderService, FeedbackService feedbackService)
+        public ChefController(OrderService orderService, FeedbackService feedbackService, MenuService menuService)
         {
             _orderService = orderService;
             _feedbackService = feedbackService;
+            _menuService = menuService;
         }
 
         public IActionResult Index(string? statusFilter, string? searchTerm)
@@ -68,9 +71,7 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return View(reviews);
         }
-
-        [HttpPost]
-        public IActionResult UpdateOrderStatus(int id, string newStatus)
+        public IActionResult MenuItems(string? searchTerm)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
                 return RedirectToAction("Login", "Auth");
@@ -78,35 +79,163 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Chef"))
                 return RedirectToAction("AccessDenied", "Auth");
 
-            var order = _orderService.GetAdminOrderDetail(id);
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
 
-            if (order == null)
+            var menuItems = _menuService.GetMenuItems(searchTerm);
+
+            return View(menuItems);
+        }
+
+        [HttpPost]
+        public IActionResult EditMenuItem(MenuItemFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (model.MenuItemID == null)
             {
-                TempData["ErrorMessage"] = "Order not found.";
-                return RedirectToAction("Index");
+                ModelState.AddModelError("", "Menu item ID is missing.");
             }
 
-            bool isValidChefAction =
-                (order.OrderStatus == "Pending" && newStatus == "Preparing") ||
-                (order.OrderStatus == "Preparing" && newStatus == "Completed");
-
-            if (!isValidChefAction)
+            if (!string.IsNullOrWhiteSpace(model.ItemName) &&
+                model.CategoryID > 0 &&
+                _menuService.IsMenuItemNameTaken(model.ItemName, model.CategoryID, model.MenuItemID))
             {
-                TempData["ErrorMessage"] = "Invalid kitchen status update.";
-                return RedirectToAction("OrderDetails", new { id });
+                ModelState.AddModelError("ItemName", "This menu item already exists in the selected category.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
             }
 
             try
             {
-                _orderService.UpdateOrderStatus(id, newStatus);
-                TempData["SuccessMessage"] = "Order status updated successfully.";
+                _menuService.UpdateMenuItemByChef(model);
+                TempData["SuccessMessage"] = "Menu item updated successfully.";
+                return RedirectToAction("MenuItems");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                ModelState.AddModelError("", "Failed to update menu item: " + ex.Message);
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult EditMenuItem(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var menuItem = _menuService.GetMenuItemById(id);
+
+            if (menuItem == null)
+            {
+                TempData["ErrorMessage"] = "Menu item not found.";
+                return RedirectToAction("MenuItems");
             }
 
-            return RedirectToAction("OrderDetails", new { id });
+            menuItem.Categories = _menuService.GetActiveCategories();
+
+            return View(menuItem);
+        }
+
+        [HttpGet]
+        public IActionResult AddMenuItem()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var model = new MenuItemFormViewModel
+            {
+                Categories = _menuService.GetActiveCategories()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult AddMenuItem(MenuItemFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!string.IsNullOrWhiteSpace(model.ItemName) &&
+                model.CategoryID > 0 &&
+                _menuService.IsMenuItemNameTaken(model.ItemName, model.CategoryID))
+            {
+                ModelState.AddModelError("ItemName", "This menu item already exists in the selected category.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+
+            int createdByUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _menuService.AddMenuItem(model, createdByUserId);
+                TempData["SuccessMessage"] = "Menu item added successfully.";
+                return RedirectToAction("MenuItems");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to add menu item: " + ex.Message);
+                model.Categories = _menuService.GetActiveCategories();
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        public IActionResult SetMenuItemAvailability(int id, bool isAvailable)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _menuService.SetMenuItemAvailability(id, isAvailable);
+
+                TempData["SuccessMessage"] = isAvailable
+                    ? "Menu item marked as available."
+                    : "Menu item marked as unavailable.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to update menu item availability: " + ex.Message;
+            }
+
+            return RedirectToAction("MenuItems");
         }
     }
 }

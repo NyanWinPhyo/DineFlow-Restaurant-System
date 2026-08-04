@@ -434,6 +434,60 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public void UpdateMenuItemByChef(MenuItemFormViewModel model)
+        {
+            if (model.MenuItemID == null)
+                throw new Exception("Menu item ID is required for update.");
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string? imagePath = model.ExistingImagePath;
+
+            if (model.ImageFile != null)
+            {
+                DeleteMenuItemImage(imagePath);
+                imagePath = SaveMenuItemImage(model.ImageFile);
+            }
+            else if (model.RemoveImage)
+            {
+                DeleteMenuItemImage(imagePath);
+                imagePath = null;
+            }
+
+            string query = @"
+                UPDATE MenuItems
+                SET
+                    CategoryID = @categoryId,
+                    ItemName = @itemName,
+                    Description = @description,
+                    IsAvailable = @isAvailable,
+                    ImagePath = @imagePath
+                WHERE MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@categoryId", model.CategoryID);
+                cmd.Parameters.AddWithValue("@itemName", model.ItemName.Trim());
+
+                cmd.Parameters.AddWithValue("@description",
+                    string.IsNullOrWhiteSpace(model.Description)
+                        ? DBNull.Value
+                        : model.Description.Trim());
+
+                cmd.Parameters.AddWithValue("@isAvailable", model.IsAvailable);
+
+                cmd.Parameters.AddWithValue("@imagePath",
+                    string.IsNullOrWhiteSpace(imagePath)
+                        ? DBNull.Value
+                        : imagePath);
+
+                cmd.Parameters.AddWithValue("@menuItemId", model.MenuItemID.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
         public bool CategoryHasAvailableMenuItems(int categoryId)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
