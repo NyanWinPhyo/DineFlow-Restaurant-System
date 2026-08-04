@@ -572,5 +572,80 @@ namespace DineFlowRestaurantSystem.Services
                 }
             }
         }
+        public List<AdminOrderListItemViewModel> GetKitchenOrders(string? statusFilter = null, string? searchTerm = null)
+        {
+            List<AdminOrderListItemViewModel> orders = new List<AdminOrderListItemViewModel>();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT 
+            o.OrderID,
+            o.OrderDate,
+            o.TotalAmount,
+            o.OrderStatus,
+            o.PaymentStatus,
+            u.Username AS CustomerName,
+            u.LoginID AS CustomerLoginID
+        FROM Orders o
+        INNER JOIN Users u ON o.CustomerID = u.UserID
+        WHERE
+            (
+                (@statusFilter IS NULL AND o.OrderStatus IN ('Pending', 'Preparing'))
+                OR
+                (@statusFilter IS NOT NULL AND o.OrderStatus = @statusFilter)
+            )
+            AND
+            (
+                @searchTerm IS NULL
+                OR CAST(o.OrderID AS VARCHAR(20)) LIKE @searchTerm
+                OR u.Username LIKE @searchTerm
+                OR u.LoginID LIKE @searchTerm
+            )
+        ORDER BY o.OrderDate ASC";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                if (string.IsNullOrWhiteSpace(statusFilter))
+                {
+                    cmd.Parameters.AddWithValue("@statusFilter", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@statusFilter", statusFilter);
+                }
+
+                if (string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", DBNull.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm.Trim() + "%");
+                }
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        orders.Add(new AdminOrderListItemViewModel
+                        {
+                            OrderID = Convert.ToInt32(reader["OrderID"]),
+                            OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                            TotalAmount = Convert.ToDecimal(reader["TotalAmount"]),
+                            OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                            PaymentStatus = reader["PaymentStatus"].ToString() ?? "",
+                            CustomerName = reader["CustomerName"].ToString() ?? "",
+                            CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                        });
+                    }
+                }
+            }
+
+            return orders;
+        }
     }
 }

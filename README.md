@@ -122,7 +122,7 @@ Current database tables:
 - Rating and comment system
 - Admin/Manager feedback management
 - Optional admin/manager response to feedback
-- 
+
 ### Inventory System
 - Ingredient tracking
 - Ingredient stock levels

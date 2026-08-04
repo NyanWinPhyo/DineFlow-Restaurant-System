@@ -1,8 +1,142 @@
-﻿@{
-    ViewData["Title"] = "Chef Dashboard";
+﻿@model List<DineFlowRestaurantSystem.ViewModels.AdminOrderListItemViewModel>
+
+@{
+    ViewData["Title"] = "Kitchen Dashboard";
 }
 
-<h1>Chef Dashboard</h1>
-<p>Welcome, @ViewBag.Username.</p>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Kitchen Dashboard</h2>
+            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Manage active kitchen orders.</p>
+        </div>
 
-<a asp-controller="Auth" asp-action="Logout" class="btn btn-danger">Logout</a>
+        <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+            Logout
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-controller="Chef" asp-action="Index" method="get" class="row g-2">
+                <div class="col-md-5">
+                    <input type="text"
+                           name="searchTerm"
+                           value="@ViewBag.SearchTerm"
+                           class="form-control"
+                           placeholder="Search by order ID, customer name, or login ID..." />
+                </div>
+
+                <div class="col-md-4">
+                    <select name="statusFilter" class="form-select">
+                        <option value="">Active Kitchen Orders</option>
+                        <option value="Pending" selected="@(ViewBag.StatusFilter == "Pending")">Pending</option>
+                        <option value="Preparing" selected="@(ViewBag.StatusFilter == "Preparing")">Preparing</option>
+                        <option value="Completed" selected="@(ViewBag.StatusFilter == "Completed")">Completed</option>
+                        <option value="Cancelled" selected="@(ViewBag.StatusFilter == "Cancelled")">Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No kitchen orders found.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Kitchen Orders</h5>
+            </div>
+
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Time</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td>#@order.OrderID</td>
+
+                                <td>
+                                    @order.CustomerName
+                                    <div class="text-muted small">@order.CustomerLoginID</div>
+                                </td>
+
+                                <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@order.TotalAmount.ToString("C")</td>
+
+                                <td>
+                                    @if (order.OrderStatus == "Pending")
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                    else if (order.OrderStatus == "Preparing")
+                                    {
+                                        <span class="badge bg-primary">Preparing</span>
+                                    }
+                                    else if (order.OrderStatus == "Completed")
+                                    {
+                                        <span class="badge bg-success">Completed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@order.OrderStatus</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-success">@order.PaymentStatus</span>
+                                </td>
+
+                                <td>
+                                    <a asp-controller="Chef"
+                                       asp-action="OrderDetails"
+                                       asp-route-id="@order.OrderID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View Order
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

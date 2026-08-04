@@ -1,0 +1,128 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.AdminOrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Kitchen Order Details";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Order #@Model.OrderID</h2>
+            <p class="text-muted mb-0">
+                Kitchen order details for @Model.CustomerName.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Chef" asp-action="Index" class="btn btn-outline-primary">
+                Back to Kitchen
+            </a>
+
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Customer:</strong> @Model.CustomerName (@Model.CustomerLoginID)</p>
+            <p><strong>Placed At:</strong> @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</p>
+            <p><strong>Total:</strong> @Model.TotalAmount.ToString("C")</p>
+
+            <p>
+                <strong>Status:</strong>
+
+                @if (Model.OrderStatus == "Pending")
+                {
+                    <span class="badge bg-warning text-dark">Pending</span>
+                }
+                else if (Model.OrderStatus == "Preparing")
+                {
+                    <span class="badge bg-primary">Preparing</span>
+                }
+                else if (Model.OrderStatus == "Completed")
+                {
+                    <span class="badge bg-success">Completed</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">@Model.OrderStatus</span>
+                }
+            </p>
+
+            @if (Model.OrderStatus == "Pending")
+            {
+                <form asp-controller="Chef"
+                      asp-action="UpdateOrderStatus"
+                      asp-route-id="@Model.OrderID"
+                      asp-route-newStatus="Preparing"
+                      method="post">
+                    <button type="submit" class="btn btn-primary">
+                        Start Preparing
+                    </button>
+                </form>
+            }
+            else if (Model.OrderStatus == "Preparing")
+            {
+                <form asp-controller="Chef"
+                      asp-action="UpdateOrderStatus"
+                      asp-route-id="@Model.OrderID"
+                      asp-route-newStatus="Completed"
+                      method="post"
+                      onsubmit="return confirm('Mark this order as completed?');">
+                    <button type="submit" class="btn btn-success">
+                        Mark Completed
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Items to Prepare</h5>
+        </div>
+
+        <div class="card-body">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>
+                                <span class="badge bg-dark">
+                                    x @item.Quantity
+                                </span>
+                            </td>
+                            <td class="text-muted">No special notes</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
