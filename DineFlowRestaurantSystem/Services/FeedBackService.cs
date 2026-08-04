@@ -115,7 +115,10 @@ namespace DineFlowRestaurantSystem.Services
                     f.Rating,
                     f.Comment,
                     f.AdminResponse,
+                    f.IsReviewed,
                     f.CreatedAt,
+                    f.RespondedAt,
+                    ru.Username AS RespondedByUsername,
                     o.OrderDate,
                     o.OrderStatus,
                     u.Username AS CustomerName,
@@ -123,6 +126,7 @@ namespace DineFlowRestaurantSystem.Services
                 FROM Feedback f
                 INNER JOIN Orders o ON f.OrderID = o.OrderID
                 INNER JOIN Users u ON f.CustomerID = u.UserID
+                LEFT JOIN Users ru ON f.RespondedByUserID = ru.UserID
                 WHERE
                     (@ratingFilter IS NULL OR f.Rating = @ratingFilter)
                     AND
@@ -173,7 +177,14 @@ namespace DineFlowRestaurantSystem.Services
                             AdminResponse = reader["AdminResponse"] == DBNull.Value
                                 ? null
                                 : reader["AdminResponse"].ToString(),
+                            IsReviewed = Convert.ToBoolean(reader["IsReviewed"]),
                             CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
+                            RespondedAt = reader["RespondedAt"] == DBNull.Value
+                                ? null
+                                : Convert.ToDateTime(reader["RespondedAt"]),
+                            RespondedByUsername = reader["RespondedByUsername"] == DBNull.Value
+                                ? null
+                                : reader["RespondedByUsername"].ToString(),
                             OrderDate = Convert.ToDateTime(reader["OrderDate"]),
                             OrderStatus = reader["OrderStatus"].ToString() ?? "",
                             CustomerName = reader["CustomerName"].ToString() ?? "",
@@ -184,6 +195,101 @@ namespace DineFlowRestaurantSystem.Services
             }
 
             return reviews;
+        }
+        public ReviewListItemViewModel? GetReviewById(int feedbackId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    f.FeedbackID,
+                    f.OrderID,
+                    f.Rating,
+                    f.Comment,
+                    f.AdminResponse,
+                    f.IsReviewed,
+                    f.CreatedAt,
+                    f.RespondedAt,
+                    ru.Username AS RespondedByUsername,
+                    o.OrderDate,
+                    o.OrderStatus,
+                    u.Username AS CustomerName,
+                    u.LoginID AS CustomerLoginID
+                FROM Feedback f
+                INNER JOIN Orders o ON f.OrderID = o.OrderID
+                INNER JOIN Users u ON f.CustomerID = u.UserID
+                LEFT JOIN Users ru ON f.RespondedByUserID = ru.UserID
+                WHERE f.FeedbackID = @feedbackId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@feedbackId", feedbackId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new ReviewListItemViewModel
+                        {
+                            FeedbackID = Convert.ToInt32(reader["FeedbackID"]),
+                            OrderID = Convert.ToInt32(reader["OrderID"]),
+                            Rating = Convert.ToInt32(reader["Rating"]),
+                            Comment = reader["Comment"] == DBNull.Value
+                                ? ""
+                                : reader["Comment"].ToString() ?? "",
+                            AdminResponse = reader["AdminResponse"] == DBNull.Value
+                                ? null
+                                : reader["AdminResponse"].ToString(),
+                            IsReviewed = Convert.ToBoolean(reader["IsReviewed"]),
+                            CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
+                            RespondedAt = reader["RespondedAt"] == DBNull.Value
+                                ? null
+                                : Convert.ToDateTime(reader["RespondedAt"]),
+                            RespondedByUsername = reader["RespondedByUsername"] == DBNull.Value
+                                ? null
+                                : reader["RespondedByUsername"].ToString(),
+                            OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                            OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                            CustomerName = reader["CustomerName"].ToString() ?? "",
+                            CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+        public void UpdateFeedbackResponse(ReviewResponseViewModel model, int respondedByUserId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                UPDATE Feedback
+                SET AdminResponse = @adminResponse,
+                    IsReviewed = @isReviewed,
+                    RespondedAt = GETDATE(),
+                    RespondedByUserID = @respondedByUserId
+                WHERE FeedbackID = @feedbackId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@feedbackId", model.FeedbackID);
+
+                cmd.Parameters.AddWithValue("@adminResponse",
+                    string.IsNullOrWhiteSpace(model.AdminResponse)
+                        ? DBNull.Value
+                        : model.AdminResponse.Trim());
+
+                cmd.Parameters.AddWithValue("@isReviewed", model.IsReviewed);
+                cmd.Parameters.AddWithValue("@respondedByUserId", respondedByUserId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }

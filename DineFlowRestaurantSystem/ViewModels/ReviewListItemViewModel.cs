@@ -16,10 +16,16 @@
 
         public string? AdminResponse { get; set; }
 
+        public bool IsReviewed { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime OrderDate { get; set; }
 
         public string OrderStatus { get; set; } = string.Empty;
+
+        public DateTime? RespondedAt { get; set; }
+
+        public string? RespondedByUsername { get; set; }
     }
 }
