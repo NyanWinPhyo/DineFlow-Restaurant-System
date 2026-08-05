@@ -301,5 +301,22 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public int GetPendingReviewCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM Feedback
+        WHERE IsReviewed = 0";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
     }
 }

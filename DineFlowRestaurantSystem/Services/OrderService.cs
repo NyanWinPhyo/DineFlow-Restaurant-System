@@ -658,5 +658,24 @@ namespace DineFlowRestaurantSystem.Services
 
             return orders;
         }
+        public int GetOrderCountByStatus(string status)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM Orders
+        WHERE OrderStatus = @status";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@status", status);
+
+                conn.Open();
+
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
     }
 }

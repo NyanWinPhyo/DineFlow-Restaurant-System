@@ -1,8 +1,96 @@
-﻿@{
+﻿@model DineFlowRestaurantSystem.ViewModels.ManagerDashboardViewModel
+
+@{
     ViewData["Title"] = "Manager Dashboard";
 }
 
-<h1>Manager Dashboard</h1>
-<p>Welcome, @ViewBag.Username.</p>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Manager Dashboard</h2>
+            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Monitor restaurant operations.</p>
+        </div>
 
-<a asp-controller="Auth" asp-action="Logout" class="btn btn-danger">Logout</a>
+        <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+            Logout
+        </a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Menu Items</h6>
+                    <h2>@Model.TotalMenuItems</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Available Items</h6>
+                    <h2>@Model.AvailableMenuItems</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Categories</h6>
+                    <h2>@Model.TotalCategories</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending Orders</h6>
+                    <h2>@Model.PendingOrders</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Preparing Orders</h6>
+                    <h2>@Model.PreparingOrders</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h6 class="text-muted">Pending Reviews</h6>
+                    <h2>@Model.PendingReviews</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card dashboard-card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+
+        <div class="card-body">
+            <button class="btn btn-outline-primary me-2" disabled>
+                Manage Orders
+            </button>
+
+            <button class="btn btn-outline-secondary me-2" disabled>
+                Manage Menu
+            </button>
+
+            <button class="btn btn-outline-success" disabled>
+                View Feedback
+            </button>
+        </div>
+    </div>
+</div>
