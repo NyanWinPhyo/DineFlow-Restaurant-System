@@ -1,7 +1,7 @@
 # DineFlow Restaurant System
 
 DineFlow is a restaurant management system built with ASP.NET Core MVC and SQL Server.  
-The project is designed as a full-stack portfolio project that demonstrates role-based access, user management, menu management, customer ordering, inventory tracking, reservations, and restaurant finance flow.
+The project is designed as a full-stack portfolio project that demonstrates role-based access, user management, menu management, customer ordering, kitchen order handling, customer feedback, and restaurant operation tracking.
 
 ## Tech Stack
 
@@ -37,6 +37,23 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Customer wallet handling
 - Admin profile update
 
+### Admin Order Management
+- View all customer orders
+- Search orders by order ID, customer name, or login ID
+- Filter orders by status
+- View order details
+- Update order status
+- Cancel orders with automatic customer wallet refund
+
+### Admin Feedback Management
+- View all customer reviews
+- Search reviews by order ID, customer, or comment
+- Filter reviews by rating
+- Filter reviews by reviewed/unreviewed status
+- View review details
+- Add management response
+- Mark feedback as reviewed
+
 ### Menu Management
 - Menu category management
 - Add menu categories
@@ -49,6 +66,7 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Mark menu items as available/unavailable
 - Restricted hard delete for unused menu items
 - Search menu items
+- Duplicate menu item validation
 - Food image upload, replacement, and removal for menu items
 
 ### Customer Module
@@ -67,17 +85,34 @@ The project is designed as a full-stack portfolio project that demonstrates role
 - Place orders using customer wallet balance
 - View order history
 - View order details and order status
+- Leave reviews for completed orders
+- One review per completed order
 
-### Order Management
-- Order placement from customer cart
-- Wallet payment deduction during order placement
-- Order and order item database records
-- Order status tracking
-- Admin order list
-- Admin order detail view
-- Admin order status updates
-- Cancelled order wallet refund
-- Search and filter orders by customer, order ID, and status
+### Chef Module
+- Kitchen dashboard
+- View pending and preparing orders
+- Search and filter kitchen orders
+- View kitchen-focused order details
+- Mark orders as preparing
+- Mark orders as completed
+- Read customer reviews
+- Search/filter reviews
+- Manage menu items
+- Add menu items
+- Edit menu item details
+- Upload, change, and remove food images
+- Mark menu items available/unavailable
+- Price editing restricted from chef edit form
+
+### Manager Module
+- Manager dashboard foundation
+- Dynamic operation statistics
+  - Total menu items
+  - Available menu items
+  - Total categories
+  - Pending orders
+  - Preparing orders
+  - Pending reviews
 
 ## Database
 
@@ -89,39 +124,22 @@ Current database tables:
 - MenuItems
 - Orders
 - OrderItems
+- Feedback
 
 ## Planned Features
 
-### Customer Ordering Improvements
-- Improve customer layout/navigation
-- Add cart item notes or special requests
-- Add order cancellation request flow
-- Improve order status badges
-
-### Chef Module
-- View incoming orders
-- Update preparation status
-- Mark menu items available/unavailable
-- View kitchen workload
-
-### Manager Module
-- Manage menu items and categories
-- View order status
-- View sales reports
-- Monitor restaurant operations
+### Manager Module Expansion
+- Manager order management
+- Manager menu management
+- Manager feedback handling
+- Manager sales/report dashboard
 
 ### Sales and Reports
 - Total sales report
 - Order history report
 - Menu item performance report
 - Customer activity report
-
-### Feedback and Reviews
-- Customer reviews for completed orders
-- One review per completed order
-- Rating and comment system
-- Admin/Manager feedback management
-- Optional admin/manager response to feedback
+- Revenue summary dashboard
 
 ### Inventory System
 - Ingredient tracking
@@ -144,6 +162,19 @@ Current database tables:
 - Table assignment
 - Reservation status tracking
 
+### Review System Improvements
+- Customer-visible management responses
+- Admin/Manager review response history
+- Review analytics by rating
+- Possible menu-item-specific feedback
+
+### UI Improvements
+- Shared layouts for Customer, Chef, and Manager pages
+- Better navigation
+- Improved status badge colors
+- Dashboard charts
+- Responsive layout polish
+
 ## Project Status
 
 This project is currently under active development.
@@ -155,6 +186,8 @@ Completed so far:
 - Authentication and role routing
 - Admin user management
 - Admin profile management
+- Admin order management
+- Admin feedback management
 - Menu item and category management
 - Food image upload for menu items
 - Customer menu browsing page
@@ -162,13 +195,15 @@ Completed so far:
 - Customer order placement
 - Customer wallet payment deduction
 - Customer order tracking
-- Admin order management
-- Admin order status updates and refund handling
+- Customer review system
+- Chef kitchen order dashboard
+- Chef read-only review page
+- Chef menu item management
+- Manager dashboard foundation
 
 Next development focus:
 
-- Chef order dashboard
-- Chef order status workflow
-- Kitchen-focused order view
-- Manager module foundation
+- Manager order management
+- Manager menu and feedback management
 - Sales report and dashboard analytics
+- Customer-facing review response display
