@@ -101,5 +101,86 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("OrderDetails", new { id });
         }
+        public IActionResult Feedback(string? searchTerm, int? ratingFilter, bool? reviewedFilter)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.RatingFilter = ratingFilter;
+            ViewBag.ReviewedFilter = reviewedFilter;
+
+            var reviews = _feedbackService.GetReviewsForStaff(searchTerm, ratingFilter, reviewedFilter);
+
+            return View(reviews);
+        }
+
+        [HttpGet]
+        public IActionResult FeedbackDetails(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var review = _feedbackService.GetReviewById(id);
+
+            if (review == null)
+            {
+                TempData["ErrorMessage"] = "Feedback not found.";
+                return RedirectToAction("Feedback");
+            }
+
+            var responseModel = new ReviewResponseViewModel
+            {
+                FeedbackID = review.FeedbackID,
+                AdminResponse = review.AdminResponse,
+                IsReviewed = review.IsReviewed
+            };
+
+            ViewBag.Review = review;
+
+            return View(responseModel);
+        }
+
+        [HttpPost]
+        public IActionResult FeedbackDetails(ReviewResponseViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Review = _feedbackService.GetReviewById(model.FeedbackID);
+                return View(model);
+            }
+
+            int respondedByUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _feedbackService.UpdateFeedbackResponse(model, respondedByUserId);
+                TempData["SuccessMessage"] = "Feedback response updated successfully.";
+                return RedirectToAction("FeedbackDetails", new { id = model.FeedbackID });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update feedback response: " + ex.Message);
+                ViewBag.Review = _feedbackService.GetReviewById(model.FeedbackID);
+                return View(model);
+            }
+        }
     }
 }

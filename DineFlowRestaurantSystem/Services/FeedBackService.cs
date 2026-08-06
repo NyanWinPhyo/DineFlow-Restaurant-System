@@ -306,9 +306,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT COUNT(*)
-        FROM Feedback
-        WHERE IsReviewed = 0";
+                SELECT COUNT(*)
+                FROM Feedback
+                WHERE IsReviewed = 0";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -317,6 +317,74 @@ namespace DineFlowRestaurantSystem.Services
 
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
+        }
+        public ReviewListItemViewModel? GetCustomerReviewForOrder(int orderId, int customerId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    f.FeedbackID,
+                    f.OrderID,
+                    f.Rating,
+                    f.Comment,
+                    f.AdminResponse,
+                    f.IsReviewed,
+                    f.CreatedAt,
+                    f.RespondedAt,
+                    ru.Username AS RespondedByUsername,
+                    o.OrderDate,
+                    o.OrderStatus,
+                    u.Username AS CustomerName,
+                    u.LoginID AS CustomerLoginID
+                FROM Feedback f
+                INNER JOIN Orders o ON f.OrderID = o.OrderID
+                INNER JOIN Users u ON f.CustomerID = u.UserID
+                LEFT JOIN Users ru ON f.RespondedByUserID = ru.UserID
+                WHERE f.OrderID = @orderId
+                  AND f.CustomerID = @customerId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+                cmd.Parameters.AddWithValue("@customerId", customerId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new ReviewListItemViewModel
+                        {
+                            FeedbackID = Convert.ToInt32(reader["FeedbackID"]),
+                            OrderID = Convert.ToInt32(reader["OrderID"]),
+                            Rating = Convert.ToInt32(reader["Rating"]),
+                            Comment = reader["Comment"] == DBNull.Value
+                                ? ""
+                                : reader["Comment"].ToString() ?? "",
+                            AdminResponse = reader["AdminResponse"] == DBNull.Value
+                                ? null
+                                : reader["AdminResponse"].ToString(),
+                            IsReviewed = Convert.ToBoolean(reader["IsReviewed"]),
+                            CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
+                            RespondedAt = reader["RespondedAt"] == DBNull.Value
+                                ? null
+                                : Convert.ToDateTime(reader["RespondedAt"]),
+                            RespondedByUsername = reader["RespondedByUsername"] == DBNull.Value
+                                ? null
+                                : reader["RespondedByUsername"].ToString(),
+                            OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                            OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                            CustomerName = reader["CustomerName"].ToString() ?? "",
+                            CustomerLoginID = reader["CustomerLoginID"].ToString() ?? ""
+                        };
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

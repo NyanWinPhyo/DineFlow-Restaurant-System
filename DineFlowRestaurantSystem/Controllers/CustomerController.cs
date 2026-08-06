@@ -130,8 +130,11 @@ namespace DineFlowRestaurantSystem.Controllers
 
             if (order == null)
             {
-                return RedirectToAction("AccessDenied", "Auth");
+                TempData["ErrorMessage"] = "Order not found.";
+                return RedirectToAction("Orders");
             }
+
+            ViewBag.CustomerReview = _feedbackService.GetCustomerReviewForOrder(id, customerId);
 
             return View(order);
         }
