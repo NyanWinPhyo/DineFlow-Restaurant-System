@@ -1,0 +1,167 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.AdminOrderDetailViewModel
+
+@{
+    ViewData["Title"] = "Manager Order Details";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Order #@Model.OrderID</h2>
+            <p class="text-muted mb-0">Review and manage this customer order.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Manager" asp-action="Orders" class="btn btn-outline-primary">
+                Back to Orders
+            </a>
+
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
+                Logout
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card dashboard-card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Order Summary</h5>
+        </div>
+
+        <div class="card-body">
+            <p><strong>Customer:</strong> @Model.CustomerName (@Model.CustomerLoginID)</p>
+            <p><strong>Date:</strong> @Model.OrderDate.ToString("yyyy-MM-dd HH:mm")</p>
+            <p><strong>Total:</strong> @Model.TotalAmount.ToString("C")</p>
+
+            <p>
+                <strong>Order Status:</strong>
+
+                @if (Model.OrderStatus == "Pending")
+                {
+                    <span class="badge bg-warning text-dark">Pending</span>
+                }
+                else if (Model.OrderStatus == "Preparing")
+                {
+                    <span class="badge bg-primary">Preparing</span>
+                }
+                else if (Model.OrderStatus == "Completed")
+                {
+                    <span class="badge bg-success">Completed</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">@Model.OrderStatus</span>
+                }
+            </p>
+
+            <p>
+                <strong>Payment Status:</strong>
+
+                @if (Model.PaymentStatus == "Refunded")
+                {
+                    <span class="badge bg-secondary">Refunded</span>
+                }
+                else
+                {
+                    <span class="badge bg-success">@Model.PaymentStatus</span>
+                }
+            </p>
+
+            @if (Model.OrderStatus != "Cancelled" && Model.OrderStatus != "Completed")
+            {
+                <hr />
+
+                <h6>Update Order Status</h6>
+
+                <div class="d-flex gap-2">
+                    @if (Model.OrderStatus == "Pending")
+                    {
+                        <form asp-controller="Manager"
+                              asp-action="UpdateOrderStatus"
+                              asp-route-id="@Model.OrderID"
+                              asp-route-newStatus="Preparing"
+                              method="post">
+                            <button type="submit" class="btn btn-outline-primary">
+                                Mark Preparing
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.OrderStatus == "Pending" || Model.OrderStatus == "Preparing")
+                    {
+                        <form asp-controller="Manager"
+                              asp-action="UpdateOrderStatus"
+                              asp-route-id="@Model.OrderID"
+                              asp-route-newStatus="Completed"
+                              method="post"
+                              onsubmit="return confirm('Mark this order as completed?');">
+                            <button type="submit" class="btn btn-outline-success">
+                                Mark Completed
+                            </button>
+                        </form>
+
+                        <form asp-controller="Manager"
+                              asp-action="UpdateOrderStatus"
+                              asp-route-id="@Model.OrderID"
+                              asp-route-newStatus="Cancelled"
+                              method="post"
+                              onsubmit="return confirm('Cancel this order and refund the customer wallet?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                Cancel & Refund
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card dashboard-card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Order Items</h5>
+        </div>
+
+        <div class="card-body">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>@item.UnitPrice.ToString("C")</td>
+                            <td>@item.Quantity</td>
+                            <td>@item.LineTotal.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="text-end">
+                <h5>Total</h5>
+                <h3>@Model.TotalAmount.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+</div>

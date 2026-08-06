@@ -43,5 +43,63 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return View(dashboard);
         }
+        public IActionResult Orders(string? statusFilter, string? searchTerm)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.SearchTerm = searchTerm;
+
+            var orders = _orderService.GetAllOrders(statusFilter, searchTerm);
+
+            return View(orders);
+        }
+        public IActionResult OrderDetails(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var order = _orderService.GetAdminOrderDetail(id);
+
+            if (order == null)
+            {
+                TempData["ErrorMessage"] = "Order not found.";
+                return RedirectToAction("Orders");
+            }
+
+            return View(order);
+        }
+
+        [HttpPost]
+        public IActionResult UpdateOrderStatus(int id, string newStatus)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _orderService.UpdateOrderStatus(id, newStatus);
+                TempData["SuccessMessage"] = "Order status updated successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction("OrderDetails", new { id });
+        }
     }
 }
