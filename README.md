@@ -126,6 +126,19 @@ Current database tables:
 - OrderItems
 - Feedback
 
+### Sales Reports
+- Admin sales report
+- Manager sales report
+- Date range filtering
+- Total sales from completed paid orders
+- Completed order count
+- Cancelled/refunded order tracking
+- Total items sold
+- Average order value
+- Top-selling menu items
+- Recent order report
+
+
 ## Planned Features
 
 ### Manager Module Expansion
