@@ -1,12 +1,13 @@
 ﻿@model List<DineFlowRestaurantSystem.ViewModels.CartItemViewModel>
 
 @{
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
     ViewData["Title"] = "Cart";
 
     decimal cartTotal = Model.Sum(item => item.LineTotal);
 }
 
-<div class="container py-4">
+<div class="container customer-page-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Your Cart</h2>
@@ -20,10 +21,6 @@
 
             <a asp-controller="Customer" asp-action="Menu" class="btn btn-outline-primary">
                 Back to Menu
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
             </a>
         </div>
     </div>

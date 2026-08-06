@@ -842,5 +842,39 @@ namespace DineFlowRestaurantSystem.Services
 
             return report;
         }
+        public int GetTotalOrderCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT COUNT(*)
+        FROM Orders";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+        public decimal GetCompletedPaidSalesTotal()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT ISNULL(SUM(TotalAmount), 0)
+        FROM Orders
+        WHERE OrderStatus = 'Completed'
+          AND PaymentStatus = 'Paid'";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+
+                return Convert.ToDecimal(cmd.ExecuteScalar());
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿@model List<DineFlowRestaurantSystem.ViewModels.CustomerMenuItemViewModel>
 
 @{
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
     ViewData["Title"] = "Menu";
 }
 
@@ -18,7 +19,7 @@
     </div>
 }
 
-<div class="container py-4">
+<div class="container customer-page-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Menu</h2>
@@ -29,18 +30,6 @@
             <span class="btn btn-outline-success disabled">
                 Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
             </span>
-
-            <a asp-controller="Customer" asp-action="Orders" class="btn btn-outline-secondary">
-                My Orders
-            </a>
-
-            <a asp-controller="Customer" asp-action="Cart" class="btn btn-outline-primary">
-                View Cart
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
-            </a>
         </div>
     </div>
 

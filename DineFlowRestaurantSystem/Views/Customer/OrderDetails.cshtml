@@ -1,11 +1,15 @@
 ﻿@model DineFlowRestaurantSystem.ViewModels.CustomerOrderDetailViewModel
 
 @{
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
     ViewData["Title"] = "Order Details";
+
+    var customerReview = ViewBag.CustomerReview as DineFlowRestaurantSystem.ViewModels.ReviewListItemViewModel;
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container customer-page-container">
+
+    <div class="d-flex justify-content-between align-items-center customer-page-header">
         <div>
             <h2 class="mb-1">Order #@Model.OrderID</h2>
             <p class="text-muted mb-0">
@@ -14,37 +18,55 @@
         </div>
 
         <div class="d-flex gap-2">
-            <span class="btn btn-outline-success disabled">
-                Wallet: @(((decimal)ViewBag.WalletBalance).ToString("C"))
+            <span class="btn btn-outline-success">
+                Wallet: @ViewBag.WalletBalance.ToString("C")
             </span>
 
             <a asp-controller="Customer" asp-action="Orders" class="btn btn-outline-primary">
                 Back to Orders
             </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
-            </a>
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card customer-card mb-4">
         <div class="card-body">
-            <h5>Status</h5>
+            <h5 class="card-title">Status</h5>
 
-            <p class="mb-1">
+            <p class="mb-2">
                 Order Status:
-                <span class="badge bg-primary">@Model.OrderStatus</span>
+                @if (Model.OrderStatus == "Pending")
+                {
+                    <span class="badge bg-warning text-dark">Pending</span>
+                }
+                else if (Model.OrderStatus == "Preparing")
+                {
+                    <span class="badge bg-primary">Preparing</span>
+                }
+                else if (Model.OrderStatus == "Completed")
+                {
+                    <span class="badge bg-success">Completed</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">@Model.OrderStatus</span>
+                }
             </p>
 
             <p class="mb-0">
                 Payment Status:
-                <span class="badge bg-success">@Model.PaymentStatus</span>
+                @if (Model.PaymentStatus == "Refunded")
+                {
+                    <span class="badge bg-secondary">Refunded</span>
+                }
+                else
+                {
+                    <span class="badge bg-success">@Model.PaymentStatus</span>
+                }
             </p>
         </div>
     </div>
 
-    <div class="card">
+    <div class="card customer-card mb-4">
         <div class="card-header bg-white">
             <h5 class="mb-0">Items</h5>
         </div>
@@ -79,64 +101,61 @@
             </div>
         </div>
     </div>
-</div>
 
-@{
-    var customerReview = ViewBag.CustomerReview as DineFlowRestaurantSystem.ViewModels.ReviewListItemViewModel;
-}
+    @if (customerReview != null)
+    {
+        <div class="card customer-card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Your Review</h5>
+            </div>
 
-@if (customerReview != null)
-{
-    <div class="card mt-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Your Review</h5>
-        </div>
-
-        <div class="card-body">
-            <p>
-                <strong>Rating:</strong>
-                <span class="badge bg-warning text-dark">
-                    @customerReview.Rating / 5
-                </span>
-            </p>
-
-            <p>
-                <strong>Your Comment:</strong>
-            </p>
-
-            @if (string.IsNullOrWhiteSpace(customerReview.Comment))
-            {
-                <p class="text-muted">No written comment.</p>
-            }
-            else
-            {
-                <p>@customerReview.Comment</p>
-            }
-
-            <hr />
-
-            <h6>Management Response</h6>
-
-            @if (string.IsNullOrWhiteSpace(customerReview.AdminResponse))
-            {
-                <p class="text-muted mb-0">
-                    No response from management yet.
+            <div class="card-body">
+                <p>
+                    <strong>Rating:</strong>
+                    <span class="badge bg-warning text-dark">
+                        @customerReview.Rating / 5
+                    </span>
                 </p>
-            }
-            else
-            {
-                <div class="alert alert-light border mb-2">
-                    @customerReview.AdminResponse
-                </div>
 
-                @if (!string.IsNullOrWhiteSpace(customerReview.RespondedByUsername))
+                <p class="mb-1">
+                    <strong>Your Comment:</strong>
+                </p>
+
+                @if (string.IsNullOrWhiteSpace(customerReview.Comment))
                 {
-                    <p class="text-muted small mb-0">
-                        Responded by @customerReview.RespondedByUsername
-                        at @customerReview.RespondedAt?.ToString("yyyy-MM-dd HH:mm")
+                    <p class="text-muted">No written comment.</p>
+                }
+                else
+                {
+                    <p>@customerReview.Comment</p>
+                }
+
+                <hr />
+
+                <h6>Management Response</h6>
+
+                @if (string.IsNullOrWhiteSpace(customerReview.AdminResponse))
+                {
+                    <p class="text-muted mb-0">
+                        No response from management yet.
                     </p>
                 }
-            }
+                else
+                {
+                    <div class="alert alert-light border mb-2">
+                        @customerReview.AdminResponse
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(customerReview.RespondedByUsername))
+                    {
+                        <p class="text-muted small mb-0">
+                            Responded by @customerReview.RespondedByUsername
+                            at @customerReview.RespondedAt?.ToString("yyyy-MM-dd HH:mm")
+                        </p>
+                    }
+                }
+            </div>
         </div>
-    </div>
-}
+    }
+
+</div>

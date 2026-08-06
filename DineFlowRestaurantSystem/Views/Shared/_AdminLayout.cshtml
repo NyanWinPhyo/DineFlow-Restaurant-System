@@ -1,4 +1,15 @@
-﻿<!DOCTYPE html>
+﻿@{
+    string? currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    string IsActive(params string[] actions)
+    {
+        return Array.IndexOf(actions, currentAction) >= 0
+            ? "active-admin-link"
+            : "";
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -16,49 +27,65 @@
 
             <ul class="nav flex-column">
                 <li class="nav-item mb-2">
-                    <a class="nav-link text-white" asp-controller="Admin" asp-action="Index">
+                    <a asp-controller="Admin"
+                       asp-action="Index"
+                       class="nav-link text-white @IsActive("Index")">
                         Dashboard
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a class="nav-link text-white" asp-controller="Admin" asp-action="Users">
+                    <a asp-controller="Admin"
+                       asp-action="Users"
+                       class="nav-link text-white @IsActive("Users", "AddUser", "EditUser")">
                         Users
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a asp-controller="Admin" asp-action="Orders" class="nav-link text-white">
+                    <a asp-controller="Admin"
+                       asp-action="Orders"
+                       class="nav-link text-white @IsActive("Orders", "OrderDetails")">
                         Orders
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a asp-controller="Admin" asp-action="Feedback" class="nav-link text-white">
+                    <a asp-controller="Admin"
+                       asp-action="Feedback"
+                       class="nav-link text-white @IsActive("Feedback", "FeedbackDetails")">
                         Feedback
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a asp-controller="Admin" asp-action="MenuItems" class="nav-link text-white">
+                    <a asp-controller="Admin"
+                       asp-action="MenuItems"
+                       class="nav-link text-white @IsActive("MenuItems", "AddMenuItem", "EditMenuItem")">
                         Menu Items
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a asp-controller="Admin" asp-action="MenuCategories" class="nav-link text-white">
+                    <a asp-controller="Admin"
+                       asp-action="MenuCategories"
+                       class="nav-link text-white @IsActive("MenuCategories", "AddMenuCategory", "EditMenuCategory")">
                         Menu Categories
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a asp-controller="Admin" asp-action="SalesReport" class="nav-link text-white">
+                    <a asp-controller="Admin"
+                       asp-action="SalesReport"
+                       class="nav-link text-white @IsActive("SalesReport")">
                         Sales Report
                     </a>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <a class="nav-link text-white" asp-controller="Admin" asp-action="Profile">
+                    <a asp-controller="Admin"
+                       asp-action="Profile"
+                       class="nav-link text-white @IsActive("Profile")">
                         Profile
                     </a>
                 </li>

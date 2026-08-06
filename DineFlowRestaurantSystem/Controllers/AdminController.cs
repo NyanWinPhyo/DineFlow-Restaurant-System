@@ -36,8 +36,8 @@ namespace DineFlowRestaurantSystem.Controllers
                 TotalMenuItems = _menuService.GetTotalMenuItemCount(),
                 AvailableMenuItems = _menuService.GetAvailableMenuItemCount(),
                 TotalCategories = _menuService.GetTotalCategoryCount(),
-                TotalOrders = 0,
-                TotalSales = 0,
+                TotalOrders = _orderService.GetTotalOrderCount(),
+                TotalSales = _orderService.GetCompletedPaidSalesTotal(),
                 ActiveRole = SessionHelper.GetRole(HttpContext)
             };
 

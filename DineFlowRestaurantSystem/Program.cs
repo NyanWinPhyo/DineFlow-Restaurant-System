@@ -1,3 +1,6 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -12,6 +15,17 @@ builder.Services.AddScoped<DineFlowRestaurantSystem.Services.OrderService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.FeedbackService>();
 
 var app = builder.Build();
+var malaysiaCulture = new CultureInfo("en-MY");
+
+CultureInfo.DefaultThreadCurrentCulture = malaysiaCulture;
+CultureInfo.DefaultThreadCurrentUICulture = malaysiaCulture;
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(malaysiaCulture),
+    SupportedCultures = new[] { malaysiaCulture },
+    SupportedUICultures = new[] { malaysiaCulture }
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
