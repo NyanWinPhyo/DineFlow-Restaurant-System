@@ -11,7 +11,18 @@ namespace DineFlowRestaurantSystem.Services
         {
             _configuration = configuration;
         }
+        private void AddDateRangeParameters(SqlCommand cmd, DateTime? startDate, DateTime? endDate)
+        {
+            cmd.Parameters.AddWithValue(
+                "@startDate",
+                startDate.HasValue ? (object)startDate.Value.Date : DBNull.Value
+            );
 
+            cmd.Parameters.AddWithValue(
+                "@endDate",
+                endDate.HasValue ? (object)endDate.Value.Date : DBNull.Value
+            );
+        }
         public int PlaceOrder(int customerId, List<CartItemViewModel> cart)
         {
             if (cart == null || cart.Count == 0)
@@ -676,6 +687,160 @@ namespace DineFlowRestaurantSystem.Services
 
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
+        }
+        public SalesReportViewModel GetSalesReport(DateTime? startDate, DateTime? endDate)
+        {
+            SalesReportViewModel report = new SalesReportViewModel
+            {
+                StartDate = startDate,
+                EndDate = endDate
+            };
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string summaryQuery = @"
+                    SELECT
+                        ISNULL(SUM(CASE 
+                            WHEN OrderStatus = 'Completed' AND PaymentStatus = 'Paid' 
+                            THEN TotalAmount 
+                            ELSE 0 
+                        END), 0) AS TotalSales,
+
+                        COUNT(CASE 
+                            WHEN OrderStatus = 'Completed' AND PaymentStatus = 'Paid' 
+                            THEN 1 
+                        END) AS CompletedOrderCount,
+
+                        ISNULL(SUM(CASE 
+                            WHEN OrderStatus = 'Cancelled' AND PaymentStatus = 'Refunded' 
+                            THEN TotalAmount 
+                            ELSE 0 
+                        END), 0) AS RefundedAmount,
+
+                        COUNT(CASE 
+                            WHEN OrderStatus = 'Cancelled' 
+                            THEN 1 
+                        END) AS CancelledOrderCount
+                    FROM Orders
+                    WHERE
+                        (@startDate IS NULL OR OrderDate >= @startDate)
+                AND (@endDate IS NULL OR OrderDate < DATEADD(DAY, 1, @endDate))";
+
+                using (SqlCommand cmd = new SqlCommand(summaryQuery, conn))
+                {
+                    AddDateRangeParameters(cmd, startDate, endDate);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            report.TotalSales = Convert.ToDecimal(reader["TotalSales"]);
+                            report.CompletedOrderCount = Convert.ToInt32(reader["CompletedOrderCount"]);
+                            report.RefundedAmount = Convert.ToDecimal(reader["RefundedAmount"]);
+                            report.CancelledOrderCount = Convert.ToInt32(reader["CancelledOrderCount"]);
+                        }
+                    }
+                }
+
+                string itemsSoldQuery = @"
+                    SELECT ISNULL(SUM(oi.Quantity), 0)
+                    FROM Orders o
+                    INNER JOIN OrderItems oi ON o.OrderID = oi.OrderID
+                    WHERE
+                        o.OrderStatus = 'Completed'
+                        AND o.PaymentStatus = 'Paid'
+                        AND (@startDate IS NULL OR o.OrderDate >= @startDate)
+                        AND (@endDate IS NULL OR o.OrderDate < DATEADD(DAY, 1, @endDate))";
+
+                using (SqlCommand cmd = new SqlCommand(itemsSoldQuery, conn))
+                {
+                    AddDateRangeParameters(cmd, startDate, endDate);
+
+                    report.TotalItemsSold = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+
+                if (report.CompletedOrderCount > 0)
+                {
+                    report.AverageOrderValue = report.TotalSales / report.CompletedOrderCount;
+                }
+
+                string topItemsQuery = @"
+                    SELECT TOP 10
+                        oi.ItemName,
+                        SUM(oi.Quantity) AS QuantitySold,
+                        SUM(oi.LineTotal) AS Revenue
+                    FROM Orders o
+                    INNER JOIN OrderItems oi ON o.OrderID = oi.OrderID
+                    WHERE
+                        o.OrderStatus = 'Completed'
+                        AND o.PaymentStatus = 'Paid'
+                        AND (@startDate IS NULL OR o.OrderDate >= @startDate)
+                        AND (@endDate IS NULL OR o.OrderDate < DATEADD(DAY, 1, @endDate))
+                    GROUP BY oi.ItemName
+                    ORDER BY QuantitySold DESC, Revenue DESC";
+
+                using (SqlCommand cmd = new SqlCommand(topItemsQuery, conn))
+                {
+                    AddDateRangeParameters(cmd, startDate, endDate);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            report.TopSellingItems.Add(new TopSellingMenuItemViewModel
+                            {
+                                ItemName = reader["ItemName"].ToString() ?? "",
+                                QuantitySold = Convert.ToInt32(reader["QuantitySold"]),
+                                Revenue = Convert.ToDecimal(reader["Revenue"])
+                            });
+                        }
+                    }
+                }
+
+                string recentOrdersQuery = @"
+                    SELECT TOP 100
+                        o.OrderID,
+                        u.Username AS CustomerName,
+                        u.LoginID AS CustomerLoginID,
+                        o.OrderDate,
+                        o.TotalAmount,
+                        o.OrderStatus,
+                        o.PaymentStatus
+                    FROM Orders o
+                    INNER JOIN Users u ON o.CustomerID = u.UserID
+                    WHERE
+                        (@startDate IS NULL OR o.OrderDate >= @startDate)
+                        AND (@endDate IS NULL OR o.OrderDate < DATEADD(DAY, 1, @endDate))
+                    ORDER BY o.OrderDate DESC";
+
+                using (SqlCommand cmd = new SqlCommand(recentOrdersQuery, conn))
+                {
+                    AddDateRangeParameters(cmd, startDate, endDate);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            report.RecentOrders.Add(new SalesOrderReportItemViewModel
+                            {
+                                OrderID = Convert.ToInt32(reader["OrderID"]),
+                                CustomerName = reader["CustomerName"].ToString() ?? "",
+                                CustomerLoginID = reader["CustomerLoginID"].ToString() ?? "",
+                                OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                                TotalAmount = Convert.ToDecimal(reader["TotalAmount"]),
+                                OrderStatus = reader["OrderStatus"].ToString() ?? "",
+                                PaymentStatus = reader["PaymentStatus"].ToString() ?? ""
+                            });
+                        }
+                    }
+                }
+            }
+
+            return report;
         }
     }
 }

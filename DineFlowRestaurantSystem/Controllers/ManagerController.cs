@@ -542,5 +542,19 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("MenuCategories");
         }
+        public IActionResult SalesReport(DateTime? startDate, DateTime? endDate)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var report = _orderService.GetSalesReport(startDate, endDate);
+
+            return View(report);
+        }
     }
 }

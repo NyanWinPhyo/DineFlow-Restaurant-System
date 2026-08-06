@@ -1,7 +1,216 @@
-﻿@{
+﻿@model DineFlowRestaurantSystem.ViewModels.SalesReportViewModel
+
+@{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Sales Report";
+
+    string? startDateValue = Model.StartDate?.ToString("yyyy-MM-dd");
+    string? endDateValue = Model.EndDate?.ToString("yyyy-MM-dd");
 }
 
-<h2>Sales Report</h2>
-<p>This page will display sales report filters and results.</p>
+<div class="card dashboard-card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Sales Report</h5>
+    </div>
+
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="SalesReport" method="get" class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label">Start Date</label>
+                <input type="date"
+                       name="startDate"
+                       value="@startDateValue"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">End Date</label>
+                <input type="date"
+                       name="endDate"
+                       value="@endDateValue"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Apply Filter
+                </button>
+
+                <a asp-controller="Admin" asp-action="SalesReport" class="btn btn-secondary">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Total Sales</h6>
+                <h3>@Model.TotalSales.ToString("C")</h3>
+                <small class="text-muted">Completed paid orders only</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Completed Orders</h6>
+                <h3>@Model.CompletedOrderCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Items Sold</h6>
+                <h3>@Model.TotalItemsSold</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Average Order Value</h6>
+                <h3>@Model.AverageOrderValue.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Refunded Amount</h6>
+                <h3>@Model.RefundedAmount.ToString("C")</h3>
+                <small class="text-muted">Cancelled and refunded orders</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body">
+                <h6 class="text-muted">Cancelled Orders</h6>
+                <h3>@Model.CancelledOrderCount</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card dashboard-card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Top Selling Items</h5>
+    </div>
+
+    <div class="card-body">
+        @if (Model.TopSellingItems.Count == 0)
+        {
+            <p class="text-muted mb-0">No completed sales found for this period.</p>
+        }
+        else
+        {
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity Sold</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.TopSellingItems)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>@item.QuantitySold</td>
+                            <td>@item.Revenue.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card dashboard-card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Recent Orders</h5>
+    </div>
+
+    <div class="card-body">
+        @if (Model.RecentOrders.Count == 0)
+        {
+            <p class="text-muted mb-0">No orders found for this period.</p>
+        }
+        else
+        {
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Order Status</th>
+                        <th>Payment</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        <tr>
+                            <td>#@order.OrderID</td>
+
+                            <td>
+                                @order.CustomerName
+                                <div class="text-muted small">@order.CustomerLoginID</div>
+                            </td>
+
+                            <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@order.TotalAmount.ToString("C")</td>
+
+                            <td>
+                                @if (order.OrderStatus == "Completed")
+                                {
+                                    <span class="badge bg-success">Completed</span>
+                                }
+                                else if (order.OrderStatus == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                                else if (order.OrderStatus == "Preparing")
+                                {
+                                    <span class="badge bg-primary">Preparing</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@order.OrderStatus</span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (order.PaymentStatus == "Refunded")
+                                {
+                                    <span class="badge bg-secondary">Refunded</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">@order.PaymentStatus</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

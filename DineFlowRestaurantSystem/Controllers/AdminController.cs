@@ -60,18 +60,6 @@ namespace DineFlowRestaurantSystem.Controllers
             return View(users);
         }
 
-        public IActionResult SalesReport()
-        {
-            if (!SessionHelper.IsLoggedIn(HttpContext))
-                return RedirectToAction("Login", "Auth");
-
-            if (!SessionHelper.HasRole(HttpContext, "Admin"))
-                return RedirectToAction("AccessDenied", "Auth");
-
-            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
-            return View();
-        }
-
         [HttpGet]
         public IActionResult Profile()
         {
@@ -846,6 +834,20 @@ namespace DineFlowRestaurantSystem.Controllers
                 ViewBag.Review = _feedbackService.GetReviewById(model.FeedbackID);
                 return View(model);
             }
+        }
+        public IActionResult SalesReport(DateTime? startDate, DateTime? endDate)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Admin"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var report = _orderService.GetSalesReport(startDate, endDate);
+
+            return View(report);
         }
     }
 }
