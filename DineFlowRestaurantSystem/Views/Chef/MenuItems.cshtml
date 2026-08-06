@@ -1,28 +1,17 @@
 ﻿@model List<DineFlowRestaurantSystem.ViewModels.MenuItemListItemViewModel>
 
 @{
+    Layout = "~/Views/Shared/_ChefLayout.cshtml";
     ViewData["Title"] = "Chef Menu Management";
 }
 
-<div class="container py-4">
+<div class="chef-page-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
+        <div class="chef-page-header">
             <h2 class="mb-1">Menu Management</h2>
-            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Manage food items and kitchen availability.</p>
-        </div>
-
-        <div class="d-flex gap-2">
-            <a asp-controller="Chef" asp-action="Index" class="btn btn-outline-primary">
-                Kitchen Dashboard
-            </a>
-
-            <a asp-controller="Chef" asp-action="Reviews" class="btn btn-outline-secondary">
-                Reviews
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
-            </a>
+            <p class="text-muted mb-0">
+                Welcome, @ViewBag.Username. Manage food items and kitchen availability.
+            </p>
         </div>
     </div>
 
@@ -40,7 +29,7 @@
         </div>
     }
 
-    <div class="card mb-4">
+    <div class="card chef-card chef-filter-card">
         <div class="card-body">
             <form asp-controller="Chef" asp-action="MenuItems" method="get" class="d-flex gap-2">
                 <input type="text"

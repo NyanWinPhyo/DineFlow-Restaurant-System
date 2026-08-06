@@ -1,0 +1,87 @@
+﻿@{
+    string? currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    string IsActive(params string[] actions)
+    {
+        return Array.IndexOf(actions, currentAction) >= 0
+            ? "active-chef-link"
+            : "";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DineFlow</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body class="chef-body">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+        <div class="chef-layout-container chef-navbar-container">
+            <a class="navbar-brand fw-bold" asp-controller="Chef" asp-action="Index">
+                DineFlow Chef
+            </a>
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#chefNavbar"
+                    aria-controls="chefNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="chefNavbar">
+                <ul class="navbar-nav ms-auto gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Index", "OrderDetails")"
+                           asp-controller="Chef"
+                           asp-action="Index">
+                            Kitchen Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("MenuItems", "AddMenuItem", "EditMenuItem")"
+                           asp-controller="Chef"
+                           asp-action="MenuItems">
+                            Menu Items
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Reviews")"
+                           asp-controller="Chef"
+                           asp-action="Reviews">
+                            Reviews
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-danger"
+                           asp-controller="Auth"
+                           asp-action="Logout">
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="chef-main">
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
