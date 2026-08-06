@@ -1,0 +1,147 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.MenuCategoryListItemViewModel>
+
+@{
+    ViewData["Title"] = "Manager Category Management";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Menu Category Management</h2>
+            <p class="text-muted mb-0">Welcome, @ViewBag.Username. Manage menu categories.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Manager" asp-action="Index" class="btn btn-outline-primary">Dashboard</a>
+            <a asp-controller="Manager" asp-action="MenuItems" class="btn btn-outline-secondary">Menu Items</a>
+            <a asp-controller="Manager" asp-action="Orders" class="btn btn-outline-secondary">Orders</a>
+            <a asp-controller="Manager" asp-action="Feedback" class="btn btn-outline-secondary">Feedback</a>
+            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">Logout</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card dashboard-card mb-4">
+        <div class="card-body">
+            <form asp-controller="Manager" asp-action="MenuCategories" method="get" class="d-flex gap-2">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Search categories..." />
+
+                <button type="submit" class="btn btn-primary">Search</button>
+
+                <a asp-controller="Manager" asp-action="AddMenuCategory" class="btn btn-success">
+                    Add Category
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <div class="card dashboard-card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Categories</h5>
+        </div>
+
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <p class="text-muted mb-0">No categories found.</p>
+            }
+            else
+            {
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Category Name</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var category in Model)
+                        {
+                            <tr>
+                                <td>@category.CategoryID</td>
+                                <td>@category.CategoryName</td>
+
+                                <td>
+                                    @if (category.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+
+                                <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a asp-controller="Manager"
+                                           asp-action="EditMenuCategory"
+                                           asp-route-id="@category.CategoryID"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        @if (category.IsActive)
+                                        {
+                                            <form asp-controller="Manager"
+                                                  asp-action="SetMenuCategoryStatus"
+                                                  asp-route-id="@category.CategoryID"
+                                                  asp-route-isActive="false"
+                                                  method="post"
+                                                  onsubmit="return confirm('Deactivate this category? Available menu items may need to be handled first.');">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Manager"
+                                                  asp-action="SetMenuCategoryStatus"
+                                                  asp-route-id="@category.CategoryID"
+                                                  asp-route-isActive="true"
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Activate
+                                                </button>
+                                            </form>
+
+                                            <form asp-controller="Manager"
+                                                  asp-action="DeleteMenuCategory"
+                                                  asp-route-id="@category.CategoryID"
+                                                  method="post"
+                                                  onsubmit="return confirm('Delete this category? Only unused inactive categories can be deleted.');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
