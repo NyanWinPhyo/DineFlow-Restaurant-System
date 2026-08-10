@@ -1,6 +1,7 @@
 ﻿@model DineFlowRestaurantSystem.ViewModels.ReviewResponseViewModel
 
 @{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "Feedback Details";
 
     var review = ViewBag.Review as DineFlowRestaurantSystem.ViewModels.ReviewListItemViewModel;
@@ -16,10 +17,6 @@
         <div class="d-flex gap-2">
             <a asp-controller="Manager" asp-action="Feedback" class="btn btn-outline-primary">
                 Back to Feedback
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
             </a>
         </div>
     </div>

@@ -1,0 +1,111 @@
+﻿@{
+    string? currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    string IsActive(params string[] actions)
+    {
+        return Array.IndexOf(actions, currentAction) >= 0
+            ? "active-manager-link"
+            : "";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DineFlow Manager</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body class="manager-body">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+        <div class="manager-layout-container manager-navbar-container">
+            <a class="navbar-brand fw-bold" asp-controller="Manager" asp-action="Index">
+                DineFlow Manager
+            </a>
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#managerNavbar"
+                    aria-controls="managerNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="managerNavbar">
+                <ul class="navbar-nav ms-auto gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Index")"
+                           asp-controller="Manager"
+                           asp-action="Index">
+                            Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Orders", "OrderDetails")"
+                           asp-controller="Manager"
+                           asp-action="Orders">
+                            Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("MenuItems", "AddMenuItem", "EditMenuItem")"
+                           asp-controller="Manager"
+                           asp-action="MenuItems">
+                            Menu Items
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("MenuCategories", "AddMenuCategory", "EditMenuCategory")"
+                           asp-controller="Manager"
+                           asp-action="MenuCategories">
+                            Categories
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("SalesReport")"
+                           asp-controller="Manager"
+                           asp-action="SalesReport">
+                            Sales Report
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Feedback", "FeedbackDetails")"
+                           asp-controller="Manager"
+                           asp-action="Feedback">
+                            Feedback
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-danger"
+                           asp-controller="Auth"
+                           asp-action="Logout">
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="manager-main">
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

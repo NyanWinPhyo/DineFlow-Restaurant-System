@@ -1,6 +1,7 @@
 ﻿@model DineFlowRestaurantSystem.ViewModels.AdminOrderDetailViewModel
 
 @{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "Manager Order Details";
 }
 
@@ -14,10 +15,6 @@
         <div class="d-flex gap-2">
             <a asp-controller="Manager" asp-action="Orders" class="btn btn-outline-primary">
                 Back to Orders
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
             </a>
         </div>
     </div>

@@ -1,6 +1,7 @@
 ﻿@model List<DineFlowRestaurantSystem.ViewModels.AdminOrderListItemViewModel>
 
 @{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "Manager Order Management";
 }
 
@@ -9,16 +10,6 @@
         <div>
             <h2 class="mb-1">Order Management</h2>
             <p class="text-muted mb-0">Welcome, @ViewBag.Username. Monitor and manage customer orders.</p>
-        </div>
-
-        <div class="d-flex gap-2">
-            <a asp-controller="Manager" asp-action="Index" class="btn btn-outline-primary">
-                Dashboard
-            </a>
-
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-                Logout
-            </a>
         </div>
     </div>
 

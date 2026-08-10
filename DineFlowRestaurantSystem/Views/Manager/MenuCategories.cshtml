@@ -1,6 +1,7 @@
 ﻿@model List<DineFlowRestaurantSystem.ViewModels.MenuCategoryListItemViewModel>
 
 @{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "Manager Category Management";
 }
 
@@ -9,14 +10,6 @@
         <div>
             <h2 class="mb-1">Menu Category Management</h2>
             <p class="text-muted mb-0">Welcome, @ViewBag.Username. Manage menu categories.</p>
-        </div>
-
-        <div class="d-flex gap-2">
-            <a asp-controller="Manager" asp-action="Index" class="btn btn-outline-primary">Dashboard</a>
-            <a asp-controller="Manager" asp-action="MenuItems" class="btn btn-outline-secondary">Menu Items</a>
-            <a asp-controller="Manager" asp-action="Orders" class="btn btn-outline-secondary">Orders</a>
-            <a asp-controller="Manager" asp-action="Feedback" class="btn btn-outline-secondary">Feedback</a>
-            <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">Logout</a>
         </div>
     </div>
 

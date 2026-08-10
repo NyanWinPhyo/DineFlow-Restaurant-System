@@ -1,6 +1,7 @@
 ﻿@model DineFlowRestaurantSystem.ViewModels.ManagerDashboardViewModel
 
 @{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
     ViewData["Title"] = "Manager Dashboard";
 }
 
@@ -10,10 +11,6 @@
             <h2 class="mb-1">Manager Dashboard</h2>
             <p class="text-muted mb-0">Welcome, @ViewBag.Username. Monitor restaurant operations.</p>
         </div>
-
-        <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger">
-            Logout
-        </a>
     </div>
 
     <div class="row g-4 mb-4">
@@ -71,30 +68,6 @@
                     <h2>@Model.PendingReviews</h2>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="card dashboard-card">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Quick Actions</h5>
-        </div>
-
-        <div class="card-body">
-            <a asp-controller="Manager" asp-action="Orders" class="btn btn-outline-primary me-2">
-                Manage Orders
-            </a>
-
-            <a asp-controller="Manager" asp-action="MenuItems" class="btn btn-outline-secondary me-2">
-                Manage Menu
-            </a>
-
-            <a asp-controller="Manager" asp-action="Feedback" class="btn btn-outline-success">
-                View Feedback
-            </a>
-
-            <a asp-controller="Manager" asp-action="SalesReport" class="btn btn-outline-dark">
-                Sales Report
-            </a>
         </div>
     </div>
 </div>
