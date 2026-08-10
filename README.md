@@ -138,6 +138,15 @@ Current database tables:
 - Top-selling menu items
 - Recent order report
 
+### UI and Layout Improvements
+- Added dedicated layouts for Admin, Manager, Chef, Customer, and Login pages
+- Removed default ASP.NET navigation from role pages
+- Improved sidebar and navbar styling
+- Added active navigation highlights
+- Improved responsive table behavior
+- Fixed table shifting when action buttons appear
+- Added Malaysian Ringgit currency formatting
+- Added sales report date validation
 
 ## Planned Features
 
