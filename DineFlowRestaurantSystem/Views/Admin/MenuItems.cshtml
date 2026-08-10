@@ -51,117 +51,119 @@
         }
         else
         {
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>No.</th>
-                        <th>ID</th>
-                        <th>Image</th>
-                        <th>Item Name</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Availability</th>
-                        <th>Created By</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @{
-                        int rowNumber = 1;
-                    }
-
-                    @foreach (var item in Model)
-                    {
+            <div class="table-responsive admin-table-scroll">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>@rowNumber</td>
-                            <td>@item.MenuItemID</td>
+                            <th>No.</th>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Item Name</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Availability</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(item.ImagePath))
-                                {
-                                    <img src="@item.ImagePath"
-                                         alt="@item.ItemName"
-                                         class="menu-item-thumbnail" />
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No image</span>
-                                }
-                            </td>
+                    <tbody>
+                        @{
+                            int rowNumber = 1;
+                        }
 
-                            <td>@item.ItemName</td>
-                            <td>@item.CategoryName</td>
-                            <td>@item.Description</td>
-                            <td>@item.Price.ToString("C")</td>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@rowNumber</td>
+                                <td>@item.MenuItemID</td>
 
-                            <td>
-                                @if (item.IsAvailable)
-                                {
-                                    <span class="badge bg-success">Available</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Unavailable</span>
-                                }
-                            </td>
-
-                            <td>@item.CreatedByUsername</td>
-                            
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <a asp-controller="Admin"
-                                       asp-action="EditMenuItem"
-                                       asp-route-id="@item.MenuItemID"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Edit
-                                    </a>
-
-                                    @if (item.IsAvailable)
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.ImagePath))
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="SetMenuItemAvailability"
-                                              asp-route-id="@item.MenuItemID"
-                                              asp-route-isAvailable="false"
-                                              method="post"
-                                              onsubmit="return confirm('Mark this menu item as unavailable?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                Mark Unavailable
-                                            </button>
-                                        </form>
+                                        <img src="@item.ImagePath"
+                                             alt="@item.ItemName"
+                                             class="menu-item-thumbnail" />
                                     }
                                     else
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="SetMenuItemAvailability"
-                                              asp-route-id="@item.MenuItemID"
-                                              asp-route-isAvailable="true"
-                                              method="post">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                Mark Available
-                                            </button>
-                                        </form>
-
-                                        <form asp-controller="Admin"
-                                              asp-action="DeleteMenuItem"
-                                              asp-route-id="@item.MenuItemID"
-                                              method="post"
-                                              onsubmit="return confirm('This will permanently delete the menu item. Continue?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <span class="text-muted">No image</span>
                                     }
-                                </div>
-                            </td>
-                            @{
-                                rowNumber++;
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                </td>
+
+                                <td>@item.ItemName</td>
+                                <td>@item.CategoryName</td>
+                                <td>@item.Description</td>
+                                <td>@item.Price.ToString("C")</td>
+
+                                <td>
+                                    @if (item.IsAvailable)
+                                    {
+                                        <span class="badge bg-success">Available</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unavailable</span>
+                                    }
+                                </td>
+
+                                <td>@item.CreatedByUsername</td>
+                            
+                                <td>
+                                    <div class="admin-table-actions">
+                                        <a asp-controller="Admin"
+                                           asp-action="EditMenuItem"
+                                           asp-route-id="@item.MenuItemID"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        @if (item.IsAvailable)
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="SetMenuItemAvailability"
+                                                  asp-route-id="@item.MenuItemID"
+                                                  asp-route-isAvailable="false"
+                                                  method="post"
+                                                  onsubmit="return confirm('Mark this menu item as unavailable?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Mark Unavailable
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="SetMenuItemAvailability"
+                                                  asp-route-id="@item.MenuItemID"
+                                                  asp-route-isAvailable="true"
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Mark Available
+                                                </button>
+                                            </form>
+
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteMenuItem"
+                                                  asp-route-id="@item.MenuItemID"
+                                                  method="post"
+                                                  onsubmit="return confirm('This will permanently delete the menu item. Continue?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                                @{
+                                    rowNumber++;
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>

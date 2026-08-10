@@ -8,6 +8,13 @@
     string? endDateValue = Model.EndDate?.ToString("yyyy-MM-dd");
 }
 
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+
 <div class="card dashboard-card mb-4">
     <div class="card-header bg-white">
         <h5 class="mb-0">Sales Report</h5>
@@ -116,26 +123,28 @@
         }
         else
         {
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Item</th>
-                        <th>Quantity Sold</th>
-                        <th>Revenue</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var item in Model.TopSellingItems)
-                    {
+            <div class="table-responsive admin-table-scroll">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>@item.ItemName</td>
-                            <td>@item.QuantitySold</td>
-                            <td>@item.Revenue.ToString("C")</td>
+                            <th>Item</th>
+                            <th>Quantity Sold</th>
+                            <th>Revenue</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model.TopSellingItems)
+                        {
+                            <tr>
+                                <td>@item.ItemName</td>
+                                <td>@item.QuantitySold</td>
+                                <td>@item.Revenue.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>

@@ -57,98 +57,100 @@
         }
         else
         {
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>User ID</th>
-                        <th>Login ID</th>
-                        <th>Username</th>
-                        <th>Role</th>
-                        <th>Wallet Balance</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var user in Model)
-                    {
+            <div class="table-responsive admin-table-scroll">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>@user.UserID</td>
-                            <td>@user.LoginID</td>
-                            <td>@user.Username</td>
-                            <td>@user.Role</td>
+                            <th>User ID</th>
+                            <th>Login ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Wallet Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                            <td>
-                                @if (user.WalletBalance.HasValue)
-                                {
-                                    @user.WalletBalance.Value.ToString("C")
-                                }
-                                else
-                                {
-                                    <span class="text-muted">N/A</span>
-                                }
-                            </td>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.UserID</td>
+                                <td>@user.LoginID</td>
+                                <td>@user.Username</td>
+                                <td>@user.Role</td>
 
-                            <td>
-                                @if (user.IsActive)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Inactive</span>
-                                }
-                            </td>
-
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <a asp-controller="Admin"
-                                       asp-action="EditUser"
-                                       asp-route-id="@user.UserID"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Edit
-                                    </a>
-
-                                    @if (user.IsActive)
+                                <td>
+                                    @if (user.WalletBalance.HasValue)
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="DeactivateUser"
-                                              asp-route-id="@user.UserID"
-                                              method="post"
-                                              onsubmit="return confirm('Are you sure you want to deactivate this user?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                Deactivate
-                                            </button>
-                                        </form>
+                                        @user.WalletBalance.Value.ToString("C")
                                     }
                                     else
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="ReactivateUser"
-                                              asp-route-id="@user.UserID"
-                                              method="post">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                Reactivate
-                                            </button>
-                                        </form>
-
-                                        <form asp-controller="Admin"
-                                              asp-action="DeleteUser"
-                                              asp-route-id="@user.UserID"
-                                              method="post"
-                                              onsubmit="return confirm('This will permanently delete the user. This should only be used for mistaken test accounts. Continue?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <span class="text-muted">N/A</span>
                                     }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                </td>
+
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-controller="Admin"
+                                           asp-action="EditUser"
+                                           asp-route-id="@user.UserID"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        @if (user.IsActive)
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeactivateUser"
+                                                  asp-route-id="@user.UserID"
+                                                  method="post"
+                                                  onsubmit="return confirm('Are you sure you want to deactivate this user?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="ReactivateUser"
+                                                  asp-route-id="@user.UserID"
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Reactivate
+                                                </button>
+                                            </form>
+
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteUser"
+                                                  asp-route-id="@user.UserID"
+                                                  method="post"
+                                                  onsubmit="return confirm('This will permanently delete the user. This should only be used for mistaken test accounts. Continue?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>

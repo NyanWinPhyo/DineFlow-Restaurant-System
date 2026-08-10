@@ -552,6 +552,17 @@ namespace DineFlowRestaurantSystem.Controllers
 
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
 
+            if (startDate.HasValue && endDate.HasValue && startDate.Value.Date > endDate.Value.Date)
+            {
+                ViewBag.ErrorMessage = "Start date cannot be later than end date.";
+
+                var emptyReport = _orderService.GetSalesReport(null, null);
+                emptyReport.StartDate = startDate;
+                emptyReport.EndDate = endDate;
+
+                return View(emptyReport);
+            }
+
             var report = _orderService.GetSalesReport(startDate, endDate);
 
             return View(report);

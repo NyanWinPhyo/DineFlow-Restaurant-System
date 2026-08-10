@@ -51,87 +51,89 @@
         }
         else
         {
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Category Name</th>
-                        <th>Status</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var category in Model)
-                    {
+            <div class="table-responsive admin-table-scroll">
+                <table class="table table-hover align-middle admin-wide-table admin-categories-table">
+                    <thead class="table-light">
                         <tr>
-                            <td>@category.CategoryID</td>
-                            <td>@category.CategoryName</td>
+                            <th>ID</th>
+                            <th>Category Name</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                            <td>
-                                @if (category.IsActive)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Inactive</span>
-                                }
-                            </td>
+                    <tbody>
+                        @foreach (var category in Model)
+                        {
+                            <tr>
+                                <td>@category.CategoryID</td>
+                                <td>@category.CategoryName</td>
 
-                            <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-
-                            <td>
-                                <div class="d-flex gap-2">
-                                    <a asp-controller="Admin"
-                                       asp-action="EditMenuCategory"
-                                       asp-route-id="@category.CategoryID"
-                                       class="btn btn-sm btn-outline-primary">
-                                        Edit
-                                    </a>
-
+                                <td>
                                     @if (category.IsActive)
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="SetMenuCategoryStatus"
-                                              asp-route-id="@category.CategoryID"
-                                              asp-route-isActive="false"
-                                              method="post"
-                                              onsubmit="return confirm('Deactivate this category?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                Deactivate
-                                            </button>
-                                        </form>
+                                        <span class="badge bg-success">Active</span>
                                     }
                                     else
                                     {
-                                        <form asp-controller="Admin"
-                                              asp-action="SetMenuCategoryStatus"
-                                              asp-route-id="@category.CategoryID"
-                                              asp-route-isActive="true"
-                                              method="post">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">
-                                                Activate
-                                            </button>
-                                        </form>
-
-                                        <form asp-controller="Admin"
-                                              asp-action="DeleteMenuCategory"
-                                              asp-route-id="@category.CategoryID"
-                                              method="post"
-                                              onsubmit="return confirm('This will permanently delete the category. Continue?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <span class="badge bg-secondary">Inactive</span>
                                     }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                </td>
+
+                                <td>@category.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+
+                                <td>
+                                    <div class="admin-category-actions">
+                                        <a asp-controller="Admin"
+                                           asp-action="EditMenuCategory"
+                                           asp-route-id="@category.CategoryID"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        @if (category.IsActive)
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="SetMenuCategoryStatus"
+                                                  asp-route-id="@category.CategoryID"
+                                                  asp-route-isActive="false"
+                                                  method="post"
+                                                  onsubmit="return confirm('Deactivate this category?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Admin"
+                                                  asp-action="SetMenuCategoryStatus"
+                                                  asp-route-id="@category.CategoryID"
+                                                  asp-route-isActive="true"
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Activate
+                                                </button>
+                                            </form>
+
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteMenuCategory"
+                                                  asp-route-id="@category.CategoryID"
+                                                  method="post"
+                                                  onsubmit="return confirm('This will permanently delete the category. Continue?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>

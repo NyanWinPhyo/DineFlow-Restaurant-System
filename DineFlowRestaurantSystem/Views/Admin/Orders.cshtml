@@ -61,51 +61,53 @@
         }
         else
         {
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Total</th>
-                        <th>Order Status</th>
-                        <th>Payment</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach (var order in Model)
-                    {
+            <div class="table-responsive admin-table-scroll">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>#@order.OrderID</td>
-                            <td>
-                                @order.CustomerName
-                                <div class="text-muted small">@order.CustomerLoginID</div>
-                            </td>
-                            <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@order.TotalAmount.ToString("C")</td>
-
-                            <td>
-                                <span class="badge bg-primary">@order.OrderStatus</span>
-                            </td>
-
-                            <td>
-                                <span class="badge bg-success">@order.PaymentStatus</span>
-                            </td>
-
-                            <td>
-                                <a asp-controller="Admin"
-                                   asp-action="OrderDetails"
-                                   asp-route-id="@order.OrderID"
-                                   class="btn btn-sm btn-outline-primary">
-                                    View Details
-                                </a>
-                            </td>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Order Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td>#@order.OrderID</td>
+                                <td>
+                                    @order.CustomerName
+                                    <div class="text-muted small">@order.CustomerLoginID</div>
+                                </td>
+                                <td>@order.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@order.TotalAmount.ToString("C")</td>
+
+                                <td>
+                                    <span class="badge bg-primary">@order.OrderStatus</span>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-success">@order.PaymentStatus</span>
+                                </td>
+
+                                <td>
+                                    <a asp-controller="Admin"
+                                       asp-action="OrderDetails"
+                                       asp-route-id="@order.OrderID"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>

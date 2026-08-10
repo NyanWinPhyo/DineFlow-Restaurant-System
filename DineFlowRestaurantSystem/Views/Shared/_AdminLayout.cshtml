@@ -23,7 +23,9 @@
 <body>
     <div class="d-flex min-vh-100">
         <aside class="admin-sidebar bg-dark text-white p-3">
-            <h3 class="mb-4">DineFlow</h3>
+            <div class="admin-sidebar-brand">
+                DineFlow
+            </div>
 
             <ul class="nav flex-column">
                 <li class="nav-item mb-2">
@@ -92,17 +94,20 @@
             </ul>
         </aside>
 
-        <main class="flex-grow-1 bg-light">
-            <nav class="navbar navbar-light bg-white border-bottom px-4">
-                <span class="navbar-brand mb-0 h1">@ViewData["Title"]</span>
+        <main class="admin-main">
+            <div class="admin-topbar">
+                <h4 class="mb-0">@ViewData["Title"]</h4>
 
-                <div>
-                    <span class="me-3">Welcome, @ViewBag.Username</span>
-                    <a asp-controller="Auth" asp-action="Logout" class="btn btn-outline-danger btn-sm">
+                <div class="admin-topbar-user">
+                    <span>Welcome, @ViewBag.Username</span>
+
+                    <a asp-controller="Auth"
+                       asp-action="Logout"
+                       class="btn btn-outline-danger">
                         Logout
                     </a>
                 </div>
-            </nav>
+            </div>
 
             <div class="container-fluid p-4">
                 @RenderBody()
