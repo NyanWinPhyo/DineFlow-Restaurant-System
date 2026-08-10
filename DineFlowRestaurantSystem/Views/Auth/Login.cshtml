@@ -1,50 +1,44 @@
 ﻿@model DineFlowRestaurantSystem.ViewModels.LoginViewModel
 
 @{
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
     ViewData["Title"] = "Login";
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
+<div class="card auth-card">
+    <div class="auth-card-header">
+        <h2>DineFlow</h2>
+        <p>Restaurant Management System</p>
+    </div>
 
-            <div class="card shadow">
-                <div class="card-header text-center">
-                    <h3>DineFlow Login</h3>
-                </div>
+    <div class="auth-card-body">
+        <form asp-controller="Auth" asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                <div class="card-body">
-                    @if (ViewBag.ErrorMessage != null)
-                    {
-                        <div class="alert alert-danger">
-                            @ViewBag.ErrorMessage
-                        </div>
-                    }
-
-                    <form asp-action="Login" method="post">
-                        <div class="mb-3">
-                            <label asp-for="LoginID" class="form-label"></label>
-                            <input asp-for="LoginID" class="form-control" />
-                            <span asp-validation-for="LoginID" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Password" class="form-label"></label>
-                            <input asp-for="Password" class="form-control" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            Login
-                        </button>
-                    </form>
-                </div>
-
-                <div class="card-footer small text-muted">
-                    Demo accounts: admin01, manager01, chef01, cust01
-                </div>
+            <div class="mb-3">
+                <label asp-for="LoginID" class="form-label"></label>
+                <input asp-for="LoginID" class="form-control" autocomplete="username" />
+                <span asp-validation-for="LoginID" class="text-danger"></span>
             </div>
 
-        </div>
+            <div class="mb-4">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                Login
+            </button>
+        </form>
+    </div>
+
+    <div class="auth-demo-box">
+        <strong>Demo accounts:</strong>
+        admin01, manager01, chef01, cust01
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
