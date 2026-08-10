@@ -58,7 +58,17 @@
         else
         {
             <div class="table-responsive admin-table-scroll">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle admin-users-table">
+                    <colgroup>
+                        <col class="admin-user-id-col" />
+                        <col class="admin-login-id-col" />
+                        <col class="admin-username-col" />
+                        <col class="admin-role-col" />
+                        <col class="admin-wallet-col" />
+                        <col class="admin-status-col" />
+                        <col class="admin-actions-col" />
+                    </colgroup>
+
                     <thead class="table-light">
                         <tr>
                             <th>User ID</th>
@@ -102,8 +112,8 @@
                                     }
                                 </td>
 
-                                <td>
-                                    <div class="d-flex gap-2">
+                                <td class="admin-users-actions-col">
+                                    <div class="admin-users-actions">
                                         <a asp-controller="Admin"
                                            asp-action="EditUser"
                                            asp-route-id="@user.UserID"
@@ -117,11 +127,15 @@
                                                   asp-action="DeactivateUser"
                                                   asp-route-id="@user.UserID"
                                                   method="post"
-                                                  onsubmit="return confirm('Are you sure you want to deactivate this user?');">
+                                                  onsubmit="return confirm('Deactivate this user?');">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">
                                                     Deactivate
                                                 </button>
                                             </form>
+
+                                            <span class="btn btn-sm btn-outline-dark admin-action-placeholder">
+                                                Delete
+                                            </span>
                                         }
                                         else
                                         {
@@ -138,7 +152,7 @@
                                                   asp-action="DeleteUser"
                                                   asp-route-id="@user.UserID"
                                                   method="post"
-                                                  onsubmit="return confirm('This will permanently delete the user. This should only be used for mistaken test accounts. Continue?');">
+                                                  onsubmit="return confirm('Permanently delete this user?');">
                                                 <button type="submit" class="btn btn-sm btn-outline-dark">
                                                     Delete
                                                 </button>

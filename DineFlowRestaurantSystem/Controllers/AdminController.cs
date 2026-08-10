@@ -235,9 +235,9 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Admin"))
                 return RedirectToAction("AccessDenied", "Auth");
 
-            int? currentUserId = HttpContext.Session.GetInt32("UserID");
+            int currentAdminId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
-            if (currentUserId == id)
+            if (id == currentAdminId)
             {
                 TempData["ErrorMessage"] = "You cannot deactivate your own account.";
                 return RedirectToAction("Users");

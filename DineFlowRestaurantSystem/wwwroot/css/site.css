@@ -313,6 +313,76 @@ body {
     white-space: nowrap;
 }
 
+.admin-users-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+}
+
+.admin-user-id-col {
+    width: 9%;
+}
+
+.admin-login-id-col {
+    width: 13%;
+}
+
+.admin-username-col {
+    width: 21%;
+}
+
+.admin-role-col {
+    width: 12%;
+}
+
+.admin-wallet-col {
+    width: 16%;
+}
+
+.admin-status-col {
+    width: 10%;
+}
+
+.admin-actions-col {
+    width: 19%;
+}
+
+.admin-users-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    white-space: nowrap;
+    min-width: 260px;
+}
+
+.admin-users-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.admin-users-actions .btn {
+    white-space: nowrap;
+}
+
+.admin-action-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.admin-users-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.admin-users-actions .btn {
+    white-space: nowrap;
+}
+
+.admin-action-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
 
 /* =========================================================
    Customer Layout

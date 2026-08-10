@@ -83,9 +83,9 @@ namespace DineFlowRestaurantSystem.Services
                     try
                     {
                         string insertUserQuery = @"
-                    INSERT INTO Users (LoginID, Username, PasswordHash, Role, IsActive)
-                    OUTPUT INSERTED.UserID
-                    VALUES (@loginId, @username, @passwordHash, @role, @isActive)";
+                            INSERT INTO Users (LoginID, Username, PasswordHash, Role, IsActive)
+                            OUTPUT INSERTED.UserID
+                            VALUES (@loginId, @username, @passwordHash, @role, @isActive)";
 
                         int newUserId;
 
@@ -103,8 +103,8 @@ namespace DineFlowRestaurantSystem.Services
                         if (model.Role == "Customer")
                         {
                             string insertCustomerQuery = @"
-                        INSERT INTO Customers (CustomerID, WalletBalance)
-                        VALUES (@customerId, @walletBalance)";
+                                INSERT INTO Customers (CustomerID, WalletBalance)
+                                VALUES (@customerId, @walletBalance)";
 
                             using (SqlCommand cmd = new SqlCommand(insertCustomerQuery, conn, transaction))
                             {
@@ -129,17 +129,17 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        SELECT 
-            u.UserID,
-            u.LoginID,
-            u.Username,
-            u.PasswordHash,
-            u.Role,
-            u.IsActive,
-            c.WalletBalance
-        FROM Users u
-        LEFT JOIN Customers c ON u.UserID = c.CustomerID
-        WHERE u.UserID = @userId";
+                SELECT 
+                    u.UserID,
+                    u.LoginID,
+                    u.Username,
+                    u.PasswordHash,
+                    u.Role,
+                    u.IsActive,
+                    c.WalletBalance
+                FROM Users u
+                LEFT JOIN Customers c ON u.UserID = c.CustomerID
+                WHERE u.UserID = @userId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -232,13 +232,13 @@ namespace DineFlowRestaurantSystem.Services
                         if (model.Role == "Customer")
                         {
                             string upsertCustomerQuery = @"
-                        IF EXISTS (SELECT 1 FROM Customers WHERE CustomerID = @customerId)
-                            UPDATE Customers
-                            SET WalletBalance = @walletBalance
-                            WHERE CustomerID = @customerId
-                        ELSE
-                            INSERT INTO Customers (CustomerID, WalletBalance)
-                            VALUES (@customerId, @walletBalance)";
+                                IF EXISTS (SELECT 1 FROM Customers WHERE CustomerID = @customerId)
+                                    UPDATE Customers
+                                    SET WalletBalance = @walletBalance
+                                    WHERE CustomerID = @customerId
+                                ELSE
+                                    INSERT INTO Customers (CustomerID, WalletBalance)
+                                    VALUES (@customerId, @walletBalance)";
 
                             using (SqlCommand cmd = new SqlCommand(upsertCustomerQuery, conn, transaction))
                             {
@@ -251,8 +251,8 @@ namespace DineFlowRestaurantSystem.Services
                         else
                         {
                             string deleteCustomerQuery = @"
-                        DELETE FROM Customers
-                        WHERE CustomerID = @customerId";
+                                DELETE FROM Customers
+                                WHERE CustomerID = @customerId";
 
                             using (SqlCommand cmd = new SqlCommand(deleteCustomerQuery, conn, transaction))
                             {
@@ -276,9 +276,9 @@ namespace DineFlowRestaurantSystem.Services
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
             string query = @"
-        UPDATE Users
-        SET IsActive = @isActive
-        WHERE UserID = @userId";
+                UPDATE Users
+                SET IsActive = @isActive
+                WHERE UserID = @userId";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -293,11 +293,11 @@ namespace DineFlowRestaurantSystem.Services
         private bool TableColumnExists(SqlConnection conn, string tableName, string columnName)
         {
             string query = @"
-        SELECT COUNT(*)
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = 'dbo'
-          AND TABLE_NAME = @tableName
-          AND COLUMN_NAME = @columnName";
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'dbo'
+                  AND TABLE_NAME = @tableName
+                  AND COLUMN_NAME = @columnName";
 
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
