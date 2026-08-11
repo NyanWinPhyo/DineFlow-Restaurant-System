@@ -1,0 +1,66 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model DineFlowRestaurantSystem.ViewModels.IngredientFormViewModel
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Edit Ingredient";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Edit Ingredient</h2>
+        <p class="text-muted mb-0">Update ingredient details.</p>
+    </div>
+
+    <a asp-controller="Admin" asp-action="Ingredients" class="btn btn-outline-secondary">
+        Back to Ingredients
+    </a>
+</div>
+
+<div class="card dashboard-card">
+    <div class="card-body">
+        <form asp-controller="Admin" asp-action="EditIngredient" method="post">
+            <input asp-for="IngredientID" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="IngredientName" class="form-label"></label>
+                <input asp-for="IngredientName" class="form-control" />
+                <span asp-validation-for="IngredientName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Unit" class="form-label"></label>
+                <select asp-for="Unit" class="form-select" asp-items="@(new SelectList(Model.UnitOptions))">
+                    <option value="">-- Select Unit --</option>
+                </select>
+                <span asp-validation-for="Unit" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ReorderLevel" class="form-label"></label>
+                <input asp-for="ReorderLevel" class="form-control" type="number" step="0.01" min="0" />
+                <span asp-validation-for="ReorderLevel" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CostPerUnit" class="form-label"></label>
+                <input asp-for="CostPerUnit" class="form-control" type="number" step="0.0001" min="0" />
+                <span asp-validation-for="CostPerUnit" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-controller="Admin" asp-action="Ingredients" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

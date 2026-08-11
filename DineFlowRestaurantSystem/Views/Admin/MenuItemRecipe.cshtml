@@ -1,0 +1,164 @@
+﻿@model DineFlowRestaurantSystem.ViewModels.MenuItemRecipeViewModel
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Menu Item Recipe";
+}
+
+<div class="admin-page-header">
+    <p class="text-muted mb-0">Assign ingredients and required quantities for this menu item.</p>
+
+    <div class="admin-page-actions">
+        <a asp-controller="Admin" asp-action="MenuItems" class="btn btn-outline-secondary">
+            Back to Menu Items
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card dashboard-card mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">@Model.ItemName</h5>
+
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Category:</strong> @Model.CategoryName
+            </div>
+            <div class="col-md-4">
+                <strong>Price:</strong> @Model.Price.ToString("C2")
+            </div>
+            <div class="col-md-4">
+                <strong>Status:</strong>
+                @if (Model.IsAvailable)
+                {
+                    <span class="badge bg-success">Available</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Unavailable</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card dashboard-card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Add Ingredient to Recipe</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.AvailableIngredients.Count == 0)
+        {
+            <div class="alert alert-warning mb-0">
+                No active ingredients are available. Add ingredients first before creating a recipe.
+            </div>
+        }
+        else
+        {
+            <form asp-controller="Admin" asp-action="AddRecipeIngredient" method="post" class="row g-3">
+                <input type="hidden" name="MenuItemID" value="@Model.MenuItemID" />
+
+                <div class="col-md-6">
+                    <label class="form-label">Ingredient</label>
+                    <select name="IngredientID" class="form-select">
+                        <option value="">-- Select Ingredient --</option>
+                        @foreach (var ingredient in Model.AvailableIngredients)
+                        {
+                            <option value="@ingredient.IngredientID">
+                                @ingredient.IngredientName (@ingredient.Unit)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Quantity Required</label>
+                    <input name="QuantityRequired"
+                           class="form-control"
+                           type="number"
+                           step="0.01"
+                           min="0.01"
+                           placeholder="Example: 180" />
+                </div>
+
+                <div class="col-md-2 d-grid align-self-end">
+                    <button type="submit" class="btn btn-primary">
+                        Add
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card dashboard-card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Recipe Ingredients</h5>
+    </div>
+
+    <div class="card-body">
+        @if (Model.RecipeIngredients.Count == 0)
+        {
+            <div class="alert alert-info mb-0">
+                No ingredients have been assigned to this menu item yet.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ingredient</th>
+                            <th>Quantity Required</th>
+                            <th>Current Stock</th>
+                            <th>Stock Alert</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ingredient in Model.RecipeIngredients)
+                        {
+                            <tr>
+                                <td>@ingredient.IngredientName</td>
+                                <td>@ingredient.QuantityRequired.ToString("N2") @ingredient.Unit</td>
+                                <td>@ingredient.CurrentStock.ToString("N2") @ingredient.Unit</td>
+                                <td>
+                                    @if (ingredient.IsLowStock)
+                                    {
+                                        <span class="badge bg-warning text-dark">Low Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">OK</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form asp-controller="Admin"
+                                          asp-action="DeleteRecipeIngredient"
+                                          asp-route-id="@ingredient.MenuItemIngredientID"
+                                          asp-route-menuItemId="@Model.MenuItemID"
+                                          method="post"
+                                          onsubmit="return confirm('Remove this ingredient from the recipe?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

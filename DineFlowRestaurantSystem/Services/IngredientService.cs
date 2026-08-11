@@ -442,5 +442,170 @@ namespace DineFlowRestaurantSystem.Services
 
             return transactions;
         }
+        public List<IngredientOptionViewModel> GetActiveIngredientOptions()
+        {
+            List<IngredientOptionViewModel> ingredients = new();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT IngredientID, IngredientName, Unit
+                FROM Ingredients
+                WHERE IsActive = 1
+                ORDER BY IngredientName";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ingredients.Add(new IngredientOptionViewModel
+                        {
+                            IngredientID = Convert.ToInt32(reader["IngredientID"]),
+                            IngredientName = reader["IngredientName"].ToString() ?? "",
+                            Unit = reader["Unit"].ToString() ?? ""
+                        });
+                    }
+                }
+            }
+
+            return ingredients;
+        }
+        public MenuItemRecipeViewModel? GetMenuItemRecipe(int menuItemId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            MenuItemRecipeViewModel? recipe = null;
+
+            string menuItemQuery = @"
+                SELECT
+                    mi.MenuItemID,
+                    mi.ItemName,
+                    mi.Price,
+                    mi.IsAvailable,
+                    mc.CategoryName
+                FROM MenuItems mi
+                INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+                WHERE mi.MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(menuItemQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        recipe = new MenuItemRecipeViewModel
+                        {
+                            MenuItemID = Convert.ToInt32(reader["MenuItemID"]),
+                            ItemName = reader["ItemName"].ToString() ?? "",
+                            Price = Convert.ToDecimal(reader["Price"]),
+                            IsAvailable = Convert.ToBoolean(reader["IsAvailable"]),
+                            CategoryName = reader["CategoryName"].ToString() ?? ""
+                        };
+                    }
+                }
+            }
+
+            if (recipe == null)
+                return null;
+
+            string recipeQuery = @"
+                SELECT
+                    mii.MenuItemIngredientID,
+                    i.IngredientID,
+                    i.IngredientName,
+                    i.Unit,
+                    i.CurrentStock,
+                    i.ReorderLevel,
+                    mii.QuantityRequired
+                FROM MenuItemIngredients mii
+                INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                WHERE mii.MenuItemID = @menuItemId
+                ORDER BY i.IngredientName";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(recipeQuery, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        recipe.RecipeIngredients.Add(new MenuItemRecipeIngredientViewModel
+                        {
+                            MenuItemIngredientID = Convert.ToInt32(reader["MenuItemIngredientID"]),
+                            IngredientID = Convert.ToInt32(reader["IngredientID"]),
+                            IngredientName = reader["IngredientName"].ToString() ?? "",
+                            Unit = reader["Unit"].ToString() ?? "",
+                            CurrentStock = Convert.ToDecimal(reader["CurrentStock"]),
+                            ReorderLevel = Convert.ToDecimal(reader["ReorderLevel"]),
+                            QuantityRequired = Convert.ToDecimal(reader["QuantityRequired"])
+                        });
+                    }
+                }
+            }
+
+            recipe.AvailableIngredients = GetActiveIngredientOptions();
+
+            return recipe;
+        }
+        public void AddRecipeIngredient(AddRecipeIngredientViewModel model)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                INSERT INTO MenuItemIngredients
+                (
+                    MenuItemID,
+                    IngredientID,
+                    QuantityRequired
+                )
+                VALUES
+                (
+                    @menuItemId,
+                    @ingredientId,
+                    @quantityRequired
+                )";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", model.MenuItemID);
+                cmd.Parameters.AddWithValue("@ingredientId", model.IngredientID);
+                cmd.Parameters.AddWithValue("@quantityRequired", model.QuantityRequired);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+        public void DeleteRecipeIngredient(int menuItemIngredientId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                DELETE FROM MenuItemIngredients
+                WHERE MenuItemIngredientID = @menuItemIngredientId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemIngredientId", menuItemIngredientId);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }

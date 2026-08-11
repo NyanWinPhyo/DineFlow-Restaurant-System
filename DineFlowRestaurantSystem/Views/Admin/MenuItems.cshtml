@@ -119,6 +119,13 @@
                                             Edit
                                         </a>
 
+                                        <a asp-controller="Admin"
+                                           asp-action="MenuItemRecipe"
+                                           asp-route-id="@item.MenuItemID"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Recipe
+                                        </a>
+
                                         @if (item.IsAvailable)
                                         {
                                             <form asp-controller="Admin"
