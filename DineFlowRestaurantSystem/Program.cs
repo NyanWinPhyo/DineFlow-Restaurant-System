@@ -13,6 +13,7 @@ builder.Services.AddScoped<DineFlowRestaurantSystem.Services.AuthService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.MenuService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.OrderService>();
 builder.Services.AddScoped<DineFlowRestaurantSystem.Services.FeedbackService>();
+builder.Services.AddScoped<DineFlowRestaurantSystem.Services.IngredientService>();
 
 var app = builder.Build();
 var malaysiaCulture = new CultureInfo("en-MY");
