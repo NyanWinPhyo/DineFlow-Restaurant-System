@@ -52,21 +52,19 @@
         else
         {
             <div class="table-responsive admin-table-scroll">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>No.</th>
-                            <th>ID</th>
-                            <th>Image</th>
-                            <th>Item Name</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Price</th>
-                            <th>Availability</th>
-                            <th>Created By</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
+                <table class="table table-hover align-middle admin-wide-table admin-menu-items-table">
+                    <colgroup>
+                        <col class="admin-menu-no-col" />
+                        <col class="admin-menu-id-col" />
+                        <col class="admin-menu-image-col" />
+                        <col class="admin-menu-name-col" />
+                        <col class="admin-menu-category-col" />
+                        <col class="admin-menu-description-col" />
+                        <col class="admin-menu-price-col" />
+                        <col class="admin-menu-availability-col" />
+                        <col class="admin-menu-created-col" />
+                        <col class="admin-menu-actions-col" />
+                    </colgroup>
 
                     <tbody>
                         @{
@@ -111,7 +109,7 @@
                                 <td>@item.CreatedByUsername</td>
                             
                                 <td>
-                                    <div class="admin-table-actions">
+                                    <div class="admin-menu-item-actions">
                                         <a asp-controller="Admin"
                                            asp-action="EditMenuItem"
                                            asp-route-id="@item.MenuItemID"
@@ -132,9 +130,8 @@
                                                   asp-action="SetMenuItemAvailability"
                                                   asp-route-id="@item.MenuItemID"
                                                   asp-route-isAvailable="false"
-                                                  method="post"
-                                                  onsubmit="return confirm('Mark this menu item as unavailable?');">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                  method="post">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning admin-menu-availability-btn">
                                                     Mark Unavailable
                                                 </button>
                                             </form>
@@ -146,21 +143,21 @@
                                                   asp-route-id="@item.MenuItemID"
                                                   asp-route-isAvailable="true"
                                                   method="post">
-                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <button type="submit" class="btn btn-sm btn-outline-success admin-menu-availability-btn">
                                                     Mark Available
                                                 </button>
                                             </form>
-
-                                            <form asp-controller="Admin"
-                                                  asp-action="DeleteMenuItem"
-                                                  asp-route-id="@item.MenuItemID"
-                                                  method="post"
-                                                  onsubmit="return confirm('This will permanently delete the menu item. Continue?');">
-                                                <button type="submit" class="btn btn-sm btn-outline-dark">
-                                                    Delete
-                                                </button>
-                                            </form>
                                         }
+
+                                        <form asp-controller="Admin"
+                                              asp-action="DeleteMenuItem"
+                                              asp-route-id="@item.MenuItemID"
+                                              method="post"
+                                              onsubmit="return confirm('Permanently delete this menu item?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                                                Delete
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                                 @{
