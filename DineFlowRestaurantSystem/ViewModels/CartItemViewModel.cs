@@ -12,6 +12,10 @@
 
         public string? ImagePath { get; set; }
 
+        public int MaxAvailableQuantity { get; set; }
+
+        public bool CanIncreaseQuantity { get; set; }
+
         public decimal LineTotal
         {
             get

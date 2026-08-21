@@ -512,6 +512,18 @@ body {
     background-color: #f1f1f1;
 }
 
+.customer-cart-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.customer-cart-quantity-number {
+    min-width: 2rem;
+    text-align: center;
+    font-weight: 600;
+}
+
 
 /* =========================================================
    Chef Layout

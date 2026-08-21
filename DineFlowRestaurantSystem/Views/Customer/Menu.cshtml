@@ -91,10 +91,19 @@
                                 <div class="mt-auto">
                                     <h5 class="mb-3">@item.Price.ToString("C")</h5>
 
-                                    <form asp-controller="Customer"
-                                          asp-action="AddToCart"
-                                          asp-route-menuItemId="@item.MenuItemID"
-                                          method="post">
+                                    <form asp-controller="Customer" asp-action="AddToCart" method="post">
+                                        <input type="hidden" name="menuItemId" value="@item.MenuItemID" />
+
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">Qty</span>
+                                            <input type="number"
+                                                   name="quantity"
+                                                   value="1"
+                                                   min="1"
+                                                   max="20"
+                                                   class="form-control" />
+                                        </div>
+
                                         <button type="submit" class="btn btn-primary w-100">
                                             Add to Cart
                                         </button>

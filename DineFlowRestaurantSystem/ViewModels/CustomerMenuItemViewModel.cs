@@ -13,5 +13,7 @@
         public decimal Price { get; set; }
 
         public string? ImagePath { get; set; }
+
+        public int MaxAvailableQuantity { get; set; }
     }
 }

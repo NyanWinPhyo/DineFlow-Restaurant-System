@@ -839,11 +839,35 @@ namespace DineFlowRestaurantSystem.Services
                     mi.Description,
                     mi.Price,
                     mi.ImagePath,
-                    mc.CategoryName
+                    mc.CategoryName,
+                    ISNULL((
+                        SELECT CONVERT(INT, MIN(FLOOR(i.CurrentStock / mii.QuantityRequired)))
+                        FROM MenuItemIngredients mii
+                        INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                    ), 0) AS MaxAvailableQuantity
                 FROM MenuItems mi
                 INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
                 WHERE mi.IsAvailable = 1
                   AND mc.IsActive = 1
+
+                  AND EXISTS (
+                        SELECT 1
+                        FROM MenuItemIngredients mii
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                  )
+
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM MenuItemIngredients mii
+                        INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                          AND (
+                                i.IsActive = 0
+                                OR i.CurrentStock < mii.QuantityRequired
+                              )
+                  )
+
                   AND (
                         @searchTerm IS NULL
                         OR mi.ItemName LIKE @searchTerm
@@ -881,7 +905,8 @@ namespace DineFlowRestaurantSystem.Services
                             ImagePath = reader["ImagePath"] == DBNull.Value
                                 ? null
                                 : reader["ImagePath"].ToString(),
-                            CategoryName = reader["CategoryName"].ToString() ?? ""
+                            CategoryName = reader["CategoryName"].ToString() ?? "",
+                            MaxAvailableQuantity = Convert.ToInt32(reader["MaxAvailableQuantity"])
                         });
                     }
                 }
@@ -900,12 +925,35 @@ namespace DineFlowRestaurantSystem.Services
                     mi.Description,
                     mi.Price,
                     mi.ImagePath,
-                    mc.CategoryName
+                    mc.CategoryName,
+                    ISNULL((
+                        SELECT CONVERT(INT, MIN(FLOOR(i.CurrentStock / mii.QuantityRequired)))
+                        FROM MenuItemIngredients mii
+                        INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                    ), 0) AS MaxAvailableQuantity
                 FROM MenuItems mi
                 INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
                 WHERE mi.MenuItemID = @menuItemId
                   AND mi.IsAvailable = 1
-                  AND mc.IsActive = 1";
+                  AND mc.IsActive = 1
+
+                  AND EXISTS (
+                        SELECT 1
+                        FROM MenuItemIngredients mii
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                  )
+
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM MenuItemIngredients mii
+                        INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                        WHERE mii.MenuItemID = mi.MenuItemID
+                          AND (
+                                i.IsActive = 0
+                                OR i.CurrentStock < mii.QuantityRequired
+                              )
+                  )";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -929,13 +977,232 @@ namespace DineFlowRestaurantSystem.Services
                             ImagePath = reader["ImagePath"] == DBNull.Value
                                 ? null
                                 : reader["ImagePath"].ToString(),
-                            CategoryName = reader["CategoryName"].ToString() ?? ""
+                            CategoryName = reader["CategoryName"].ToString() ?? "",
+                            MaxAvailableQuantity = Convert.ToInt32(reader["MaxAvailableQuantity"])
                         };
                     }
                 }
             }
 
             return null;
+        }
+        public bool CanPrepareMenuItem(int menuItemId, int quantity)
+        {
+            if (quantity <= 0)
+            {
+                return false;
+            }
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    CASE
+                        WHEN NOT EXISTS (
+                            SELECT 1
+                            FROM MenuItemIngredients mii
+                            WHERE mii.MenuItemID = @menuItemId
+                        )
+                        THEN CAST(0 AS BIT)
+
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM MenuItemIngredients mii
+                            INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                            WHERE mii.MenuItemID = @menuItemId
+                              AND (
+                                    i.IsActive = 0
+                                    OR i.CurrentStock < (mii.QuantityRequired * @quantity)
+                                  )
+                        )
+                        THEN CAST(0 AS BIT)
+
+                        ELSE CAST(1 AS BIT)
+                    END";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+                cmd.Parameters.AddWithValue("@quantity", quantity);
+
+                conn.Open();
+
+                return Convert.ToBoolean(cmd.ExecuteScalar());
+            }
+        }
+        public int GetMaxAvailableQuantity(int menuItemId)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+        SELECT
+            CASE
+                WHEN mi.IsAvailable = 0 OR mc.IsActive = 0 THEN 0
+
+                WHEN NOT EXISTS (
+                    SELECT 1
+                    FROM MenuItemIngredients mii
+                    WHERE mii.MenuItemID = mi.MenuItemID
+                ) THEN 0
+
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM MenuItemIngredients mii
+                    INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                    WHERE mii.MenuItemID = mi.MenuItemID
+                      AND i.IsActive = 0
+                ) THEN 0
+
+                ELSE ISNULL((
+                    SELECT CONVERT(INT, MIN(FLOOR(i.CurrentStock / mii.QuantityRequired)))
+                    FROM MenuItemIngredients mii
+                    INNER JOIN Ingredients i ON mii.IngredientID = i.IngredientID
+                    WHERE mii.MenuItemID = mi.MenuItemID
+                ), 0)
+            END AS MaxAvailableQuantity
+        FROM MenuItems mi
+        INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+        WHERE mi.MenuItemID = @menuItemId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@menuItemId", menuItemId);
+
+                conn.Open();
+
+                object? result = cmd.ExecuteScalar();
+
+                if (result == null || result == DBNull.Value)
+                {
+                    return 0;
+                }
+
+                return Convert.ToInt32(result);
+            }
+        }
+        public bool CanPrepareCart(List<CartItemViewModel> cart)
+        {
+            if (cart == null || cart.Count == 0)
+            {
+                return false;
+            }
+
+            var groupedCartItems = cart
+                .GroupBy(item => item.MenuItemID)
+                .Select(group => new
+                {
+                    MenuItemID = group.Key,
+                    Quantity = group.Sum(item => item.Quantity)
+                })
+                .ToList();
+
+            if (groupedCartItems.Any(item => item.Quantity <= 0))
+            {
+                return false;
+            }
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            Dictionary<int, decimal> requiredIngredients = new Dictionary<int, decimal>();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                foreach (var cartItem in groupedCartItems)
+                {
+                    string menuItemCheckQuery = @"
+                SELECT COUNT(*)
+                FROM MenuItems mi
+                INNER JOIN MenuCategories mc ON mi.CategoryID = mc.CategoryID
+                WHERE mi.MenuItemID = @menuItemId
+                  AND mi.IsAvailable = 1
+                  AND mc.IsActive = 1";
+
+                    using (SqlCommand cmd = new SqlCommand(menuItemCheckQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@menuItemId", cartItem.MenuItemID);
+
+                        int menuItemCount = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        if (menuItemCount == 0)
+                        {
+                            return false;
+                        }
+                    }
+
+                    string recipeQuery = @"
+                SELECT IngredientID, QuantityRequired
+                FROM MenuItemIngredients
+                WHERE MenuItemID = @menuItemId";
+
+                    int recipeCount = 0;
+
+                    using (SqlCommand cmd = new SqlCommand(recipeQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@menuItemId", cartItem.MenuItemID);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                recipeCount++;
+
+                                int ingredientId = Convert.ToInt32(reader["IngredientID"]);
+                                decimal quantityRequired = Convert.ToDecimal(reader["QuantityRequired"]);
+                                decimal totalRequired = quantityRequired * cartItem.Quantity;
+
+                                if (requiredIngredients.ContainsKey(ingredientId))
+                                {
+                                    requiredIngredients[ingredientId] += totalRequired;
+                                }
+                                else
+                                {
+                                    requiredIngredients[ingredientId] = totalRequired;
+                                }
+                            }
+                        }
+                    }
+
+                    if (recipeCount == 0)
+                    {
+                        return false;
+                    }
+                }
+
+                foreach (var requiredIngredient in requiredIngredients)
+                {
+                    string stockQuery = @"
+                SELECT CurrentStock, IsActive
+                FROM Ingredients
+                WHERE IngredientID = @ingredientId";
+
+                    using (SqlCommand cmd = new SqlCommand(stockQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ingredientId", requiredIngredient.Key);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                return false;
+                            }
+
+                            decimal currentStock = Convert.ToDecimal(reader["CurrentStock"]);
+                            bool isActive = Convert.ToBoolean(reader["IsActive"]);
+
+                            if (!isActive || currentStock < requiredIngredient.Value)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }

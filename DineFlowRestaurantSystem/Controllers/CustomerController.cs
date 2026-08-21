@@ -10,25 +10,66 @@ namespace DineFlowRestaurantSystem.Controllers
         private readonly MenuService _menuService;
         private readonly OrderService _orderService;
         private readonly FeedbackService _feedbackService;
-
         private List<CartItemViewModel> GetCart()
         {
             return SessionJsonHelper.GetObject<List<CartItemViewModel>>(HttpContext.Session, "Cart")
                    ?? new List<CartItemViewModel>();
         }
-
         private void SaveCart(List<CartItemViewModel> cart)
         {
             SessionJsonHelper.SetObject(HttpContext.Session, "Cart", cart);
         }
+        private List<CartItemViewModel> CloneCart(List<CartItemViewModel> cart)
+        {
+            return cart.Select(item => new CartItemViewModel
+            {
+                MenuItemID = item.MenuItemID,
+                ItemName = item.ItemName,
+                Price = item.Price,
+                Quantity = item.Quantity,
+                ImagePath = item.ImagePath,
+                MaxAvailableQuantity = item.MaxAvailableQuantity,
+                CanIncreaseQuantity = item.CanIncreaseQuantity
+            }).ToList();
+        }
+        private void RefreshCartAvailability(List<CartItemViewModel> cart)
+        {
+            foreach (var item in cart)
+            {
+                var menuItem = _menuService.GetAvailableMenuItemByIdForCustomer(item.MenuItemID);
 
+                if (menuItem == null)
+                {
+                    item.MaxAvailableQuantity = 0;
+                    item.CanIncreaseQuantity = false;
+                    continue;
+                }
+
+                item.ItemName = menuItem.ItemName;
+                item.Price = menuItem.Price;
+                item.ImagePath = menuItem.ImagePath;
+                item.MaxAvailableQuantity = _menuService.GetMaxAvailableQuantity(item.MenuItemID);
+
+                var testCart = CloneCart(cart);
+                var testItem = testCart.FirstOrDefault(cartItem => cartItem.MenuItemID == item.MenuItemID);
+
+                if (testItem == null)
+                {
+                    item.CanIncreaseQuantity = false;
+                }
+                else
+                {
+                    testItem.Quantity += 1;
+                    item.CanIncreaseQuantity = _menuService.CanPrepareCart(testCart);
+                }
+            }
+        }
         public CustomerController(MenuService menuService, OrderService orderService, FeedbackService feedbackService)
         {
             _menuService = menuService;
             _orderService = orderService;
             _feedbackService = feedbackService;
         }
-
         public IActionResult Index()
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
@@ -39,7 +80,6 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return RedirectToAction("Menu");
         }
-
         public IActionResult Menu(string? searchTerm)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
@@ -72,6 +112,9 @@ namespace DineFlowRestaurantSystem.Controllers
             ViewBag.WalletBalance = _orderService.GetCustomerWalletBalance(customerId);
 
             var cart = GetCart();
+
+            RefreshCartAvailability(cart);
+            SaveCart(cart);
 
             return View(cart);
         }
@@ -140,7 +183,7 @@ namespace DineFlowRestaurantSystem.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddToCart(int menuItemId)
+        public IActionResult AddToCart(int menuItemId, int quantity)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
                 return RedirectToAction("Login", "Auth");
@@ -148,11 +191,17 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Customer"))
                 return RedirectToAction("AccessDenied", "Auth");
 
+            if (quantity <= 0)
+            {
+                TempData["ErrorMessage"] = "Please select a valid quantity.";
+                return RedirectToAction("Menu");
+            }
+
             var menuItem = _menuService.GetAvailableMenuItemByIdForCustomer(menuItemId);
 
             if (menuItem == null)
             {
-                TempData["ErrorMessage"] = "This item is no longer available.";
+                TempData["ErrorMessage"] = "This item is currently unavailable.";
                 return RedirectToAction("Menu");
             }
 
@@ -167,18 +216,30 @@ namespace DineFlowRestaurantSystem.Controllers
                     MenuItemID = menuItem.MenuItemID,
                     ItemName = menuItem.ItemName,
                     Price = menuItem.Price,
-                    Quantity = 1,
-                    ImagePath = menuItem.ImagePath
+                    Quantity = quantity,
+                    ImagePath = menuItem.ImagePath,
+                    MaxAvailableQuantity = menuItem.MaxAvailableQuantity
                 });
             }
             else
             {
-                existingItem.Quantity++;
+                existingItem.Quantity += quantity;
+                existingItem.ItemName = menuItem.ItemName;
+                existingItem.Price = menuItem.Price;
+                existingItem.ImagePath = menuItem.ImagePath;
+                existingItem.MaxAvailableQuantity = menuItem.MaxAvailableQuantity;
             }
 
+            if (!_menuService.CanPrepareCart(cart))
+            {
+                TempData["ErrorMessage"] = "The selected quantity is currently unavailable.";
+                return RedirectToAction("Menu");
+            }
+
+            RefreshCartAvailability(cart);
             SaveCart(cart);
 
-            TempData["SuccessMessage"] = $"{menuItem.ItemName} added to cart.";
+            TempData["SuccessMessage"] = $"{quantity} × {menuItem.ItemName} added to cart.";
 
             return RedirectToAction("Menu");
         }
@@ -247,15 +308,21 @@ namespace DineFlowRestaurantSystem.Controllers
 
                 if (menuItem == null)
                 {
-                    TempData["ErrorMessage"] = "This item is no longer available.";
+                    TempData["ErrorMessage"] = "This item is currently unavailable.";
                     return RedirectToAction("Cart");
                 }
 
                 cartItem.Quantity += 1;
-
                 cartItem.ItemName = menuItem.ItemName;
                 cartItem.Price = menuItem.Price;
                 cartItem.ImagePath = menuItem.ImagePath;
+                cartItem.MaxAvailableQuantity = menuItem.MaxAvailableQuantity;
+
+                if (!_menuService.CanPrepareCart(cart))
+                {
+                    TempData["ErrorMessage"] = "The selected quantity is currently unavailable.";
+                    return RedirectToAction("Cart");
+                }
             }
             else if (change < 0)
             {
@@ -267,6 +334,7 @@ namespace DineFlowRestaurantSystem.Controllers
                 }
             }
 
+            RefreshCartAvailability(cart);
             SaveCart(cart);
 
             return RedirectToAction("Cart");
@@ -284,6 +352,21 @@ namespace DineFlowRestaurantSystem.Controllers
             int customerId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
             var cart = GetCart();
+
+            if (cart.Count == 0)
+            {
+                TempData["ErrorMessage"] = "Your cart is empty.";
+                return RedirectToAction("Cart");
+            }
+
+            RefreshCartAvailability(cart);
+
+            if (!_menuService.CanPrepareCart(cart))
+            {
+                SaveCart(cart);
+                TempData["ErrorMessage"] = "Some items in your cart are currently unavailable.";
+                return RedirectToAction("Cart");
+            }
 
             try
             {

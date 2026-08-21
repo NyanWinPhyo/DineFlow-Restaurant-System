@@ -82,27 +82,32 @@
                                 <td>@item.Price.ToString("C")</td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <form asp-controller="Customer"
-                                              asp-action="UpdateCartQuantity"
-                                              asp-route-menuItemId="@item.MenuItemID"
-                                              asp-route-change="-1"
-                                              method="post">
+                                        <form asp-controller="Customer" asp-action="UpdateCartQuantity" method="post">
+                                            <input type="hidden" name="menuItemId" value="@item.MenuItemID" />
+                                            <input type="hidden" name="change" value="-1" />
                                             <button type="submit" class="btn btn-sm btn-outline-secondary">
                                                 -
                                             </button>
                                         </form>
 
-                                        <span class="fw-bold">@item.Quantity</span>
+                                        <span class="fw-semibold">@item.Quantity</span>
 
-                                        <form asp-controller="Customer"
-                                              asp-action="UpdateCartQuantity"
-                                              asp-route-menuItemId="@item.MenuItemID"
-                                              asp-route-change="1"
-                                              method="post">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        @if (item.CanIncreaseQuantity)
+                                        {
+                                            <form asp-controller="Customer" asp-action="UpdateCartQuantity" method="post">
+                                                <input type="hidden" name="menuItemId" value="@item.MenuItemID" />
+                                                <input type="hidden" name="change" value="1" />
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    +
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
                                                 +
                                             </button>
-                                        </form>
+                                        }
                                     </div>
                                 </td>
                                 <td>@item.LineTotal.ToString("C")</td>
