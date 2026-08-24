@@ -10,15 +10,18 @@ namespace DineFlowRestaurantSystem.Controllers
         private readonly MenuService _menuService;
         private readonly OrderService _orderService;
         private readonly FeedbackService _feedbackService;
+        private readonly IngredientService _ingredientService;
 
         public ManagerController(
             MenuService menuService,
             OrderService orderService,
-            FeedbackService feedbackService)
+            FeedbackService feedbackService,
+            IngredientService ingredientService)
         {
             _menuService = menuService;
             _orderService = orderService;
             _feedbackService = feedbackService;
+            _ingredientService = ingredientService;
         }
 
         public IActionResult Index()
@@ -370,6 +373,292 @@ namespace DineFlowRestaurantSystem.Controllers
             }
 
             return RedirectToAction("MenuItems");
+        }
+        [HttpGet]
+        public IActionResult MenuItemRecipe(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var recipe = _ingredientService.GetMenuItemRecipe(id);
+
+            if (recipe == null)
+            {
+                TempData["ErrorMessage"] = "Menu item not found.";
+                return RedirectToAction("MenuItems");
+            }
+
+            return View(recipe);
+        }
+
+        [HttpPost]
+        public IActionResult AddRecipeIngredient(AddRecipeIngredientViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Please select an ingredient and enter a valid quantity.";
+                return RedirectToAction("MenuItemRecipe", new { id = model.MenuItemID });
+            }
+
+            try
+            {
+                _ingredientService.AddRecipeIngredient(model);
+                TempData["SuccessMessage"] = "Ingredient added to recipe successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to add recipe ingredient: " + ex.Message;
+            }
+
+            return RedirectToAction("MenuItemRecipe", new { id = model.MenuItemID });
+        }
+
+        [HttpPost]
+        public IActionResult DeleteRecipeIngredient(int id, int menuItemId)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _ingredientService.DeleteRecipeIngredient(id);
+                TempData["SuccessMessage"] = "Recipe ingredient removed successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to remove recipe ingredient: " + ex.Message;
+            }
+
+            return RedirectToAction("MenuItemRecipe", new { id = menuItemId });
+        }
+
+        public IActionResult Ingredients(string? searchTerm)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+
+            var ingredients = _ingredientService.GetIngredients(searchTerm);
+
+            return View(ingredients);
+        }
+
+        [HttpGet]
+        public IActionResult AddIngredient()
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            return View(new IngredientFormViewModel());
+        }
+
+        [HttpPost]
+        public IActionResult AddIngredient(IngredientFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!string.IsNullOrWhiteSpace(model.IngredientName) &&
+                _ingredientService.IsIngredientNameTaken(model.IngredientName))
+            {
+                ModelState.AddModelError("IngredientName", "This ingredient already exists.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _ingredientService.AddIngredient(model);
+                TempData["SuccessMessage"] = "Ingredient added successfully.";
+                return RedirectToAction("Ingredients");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to add ingredient: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult EditIngredient(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var ingredient = _ingredientService.GetIngredientById(id);
+
+            if (ingredient == null)
+            {
+                TempData["ErrorMessage"] = "Ingredient not found.";
+                return RedirectToAction("Ingredients");
+            }
+
+            return View(ingredient);
+        }
+
+        [HttpPost]
+        public IActionResult EditIngredient(IngredientFormViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!string.IsNullOrWhiteSpace(model.IngredientName) &&
+                _ingredientService.IsIngredientNameTaken(model.IngredientName, model.IngredientID))
+            {
+                ModelState.AddModelError("IngredientName", "This ingredient already exists.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                _ingredientService.UpdateIngredient(model);
+                TempData["SuccessMessage"] = "Ingredient updated successfully.";
+                return RedirectToAction("Ingredients");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to update ingredient: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        [HttpPost]
+        public IActionResult SetIngredientStatus(int id, bool isActive)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            try
+            {
+                _ingredientService.SetIngredientStatus(id, isActive);
+
+                TempData["SuccessMessage"] = isActive
+                    ? "Ingredient activated successfully."
+                    : "Ingredient deactivated successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Failed to update ingredient status: " + ex.Message;
+            }
+
+            return RedirectToAction("Ingredients");
+        }
+
+        [HttpGet]
+        public IActionResult RestockIngredient(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var model = _ingredientService.GetRestockModel(id);
+
+            if (model == null)
+            {
+                TempData["ErrorMessage"] = "Ingredient not found.";
+                return RedirectToAction("Ingredients");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult RestockIngredient(RestockIngredientViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            int currentUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _ingredientService.RestockIngredient(model, currentUserId);
+                TempData["SuccessMessage"] = "Ingredient restocked successfully.";
+                return RedirectToAction("Ingredients");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Failed to restock ingredient: " + ex.Message);
+                return View(model);
+            }
+        }
+
+        public IActionResult StockTransactions(int? ingredientId)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var transactions = _ingredientService.GetStockTransactions(ingredientId);
+
+            return View(transactions);
         }
         public IActionResult MenuCategories(string? searchTerm)
         {

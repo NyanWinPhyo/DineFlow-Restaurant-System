@@ -647,6 +647,29 @@ body {
    Manager Tables
 ========================= */
 
+.manager-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.manager-page-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.manager-page-container,
+.manager-form-container {
+    width: calc(100% - clamp(2rem, 8vw, 8rem));
+    max-width: 1840px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .manager-table-scroll {
     width: 100%;
     overflow-x: auto;
@@ -741,6 +764,66 @@ body {
 }
 
 .manager-table-actions .btn {
+    white-space: nowrap;
+}
+
+.manager-ingredients-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+}
+
+.manager-ingredient-id-col {
+    width: 4%;
+}
+
+.manager-ingredient-name-col {
+    width: 15%;
+}
+
+.manager-ingredient-unit-col {
+    width: 6%;
+}
+
+.manager-ingredient-stock-col {
+    width: 12%;
+}
+
+.manager-ingredient-reorder-col {
+    width: 13%;
+}
+
+.manager-ingredient-cost-col {
+    width: 11%;
+}
+
+.manager-ingredient-status-col {
+    width: 9%;
+}
+
+.manager-ingredient-alert-col {
+    width: 10%;
+}
+
+.manager-ingredient-actions-col {
+    width: 20%;
+}
+
+.manager-ingredient-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    white-space: nowrap;
+    min-width: 310px;
+}
+
+.manager-ingredient-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.manager-ingredient-actions .btn {
     white-space: nowrap;
 }
 

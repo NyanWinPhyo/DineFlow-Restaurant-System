@@ -1,0 +1,161 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.IngredientListItemViewModel>
+
+@{
+    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+    ViewData["Title"] = "Ingredients";
+}
+
+<div class="manager-page-container">
+    <div class="manager-page-header">
+        <div>
+            <h2 class="mb-1">Ingredients</h2>
+            <p class="text-muted mb-0">Manage ingredient master list and stock levels.</p>
+        </div>
+
+        <div class="manager-page-actions">
+            <a asp-controller="Manager" asp-action="StockTransactions" class="btn btn-outline-secondary">
+                Stock Transactions
+            </a>
+            <a asp-controller="Manager" asp-action="AddIngredient" class="btn btn-primary">
+                Add Ingredient
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card dashboard-card mb-4">
+        <div class="card-body">
+            <form asp-controller="Manager" asp-action="Ingredients" method="get" class="row g-2">
+                <div class="col-md-10">
+                    <input type="text"
+                           name="searchTerm"
+                           value="@ViewBag.SearchTerm"
+                           class="form-control"
+                           placeholder="Search by ingredient name or unit..." />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-outline-primary">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card dashboard-card">
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info mb-0">No ingredients found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle manager-ingredients-table">
+                        <colgroup>
+                            <col class="manager-ingredient-id-col" />
+                            <col class="manager-ingredient-name-col" />
+                            <col class="manager-ingredient-unit-col" />
+                            <col class="manager-ingredient-stock-col" />
+                            <col class="manager-ingredient-reorder-col" />
+                            <col class="manager-ingredient-cost-col" />
+                            <col class="manager-ingredient-status-col" />
+                            <col class="manager-ingredient-alert-col" />
+                            <col class="manager-ingredient-actions-col" />
+                        </colgroup>
+                        <tbody>
+                            @foreach (var ingredient in Model)
+                            {
+                                <tr>
+                                    <td>@ingredient.IngredientID</td>
+                                    <td>@ingredient.IngredientName</td>
+                                    <td>@ingredient.Unit</td>
+                                    <td>@ingredient.CurrentStock.ToString("N2") @ingredient.Unit</td>
+                                    <td>@ingredient.ReorderLevel.ToString("N2") @ingredient.Unit</td>
+                                    <td>@ingredient.CostPerUnit.ToString("C4")</td>
+                                    <td>
+                                        @if (ingredient.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (ingredient.IsLowStock)
+                                        {
+                                            <span class="badge bg-warning text-dark">Low Stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">OK</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="manager-ingredient-actions">
+                                            <a asp-controller="Manager"
+                                               asp-action="EditIngredient"
+                                               asp-route-id="@ingredient.IngredientID"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Edit
+                                            </a>
+
+                                            <a asp-controller="Manager"
+                                               asp-action="RestockIngredient"
+                                               asp-route-id="@ingredient.IngredientID"
+                                               class="btn btn-sm btn-outline-success">
+                                                Restock
+                                            </a>
+
+                                            @if (ingredient.IsActive)
+                                            {
+                                                <form asp-controller="Manager"
+                                                      asp-action="SetIngredientStatus"
+                                                      asp-route-id="@ingredient.IngredientID"
+                                                      asp-route-isActive="false"
+                                                      method="post">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        Deactivate
+                                                    </button>
+                                                </form>
+
+                                                <span class="btn btn-sm btn-outline-dark manager-action-placeholder">
+                                                    Delete
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <form asp-controller="Manager"
+                                                      asp-action="SetIngredientStatus"
+                                                      asp-route-id="@ingredient.IngredientID"
+                                                      asp-route-isActive="true"
+                                                      method="post">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                                        Activate
+                                                    </button>
+                                                </form>
+
+                                                <span class="btn btn-sm btn-outline-dark manager-action-placeholder">
+                                                    Delete
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

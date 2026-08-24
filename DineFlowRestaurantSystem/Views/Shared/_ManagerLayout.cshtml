@@ -56,7 +56,7 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link @IsActive("MenuItems", "AddMenuItem", "EditMenuItem")"
+                        <a class="nav-link @IsActive("MenuItems", "AddMenuItem", "EditMenuItem", "MenuItemRecipe")"
                            asp-controller="Manager"
                            asp-action="MenuItems">
                             Menu Items
@@ -68,6 +68,22 @@
                            asp-controller="Manager"
                            asp-action="MenuCategories">
                             Categories
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("Ingredients", "AddIngredient", "EditIngredient", "RestockIngredient")"
+                           asp-controller="Manager"
+                           asp-action="Ingredients">
+                            Ingredients
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("StockTransactions")"
+                           asp-controller="Manager"
+                           asp-action="StockTransactions">
+                            Stock Transactions
                         </a>
                     </li>
 
