@@ -745,9 +745,11 @@ namespace DineFlowRestaurantSystem.Controllers
             if (!SessionHelper.HasRole(HttpContext, "Admin"))
                 return RedirectToAction("AccessDenied", "Auth");
 
+            int updatedByUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
             try
             {
-                _orderService.UpdateOrderStatus(id, newStatus);
+                _orderService.UpdateOrderStatus(id, newStatus, updatedByUserId);
                 TempData["SuccessMessage"] = "Order status updated successfully.";
             }
             catch (Exception ex)

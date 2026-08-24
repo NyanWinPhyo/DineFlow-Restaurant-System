@@ -11,6 +11,22 @@ namespace DineFlowRestaurantSystem.Services
         {
             _configuration = configuration;
         }
+        private class IngredientUsageRequirement
+        {
+            public int IngredientID { get; set; }
+
+            public string IngredientName { get; set; } = string.Empty;
+
+            public string Unit { get; set; } = string.Empty;
+
+            public decimal CurrentStock { get; set; }
+
+            public decimal QuantityNeeded { get; set; }
+
+            public decimal CostPerUnit { get; set; }
+
+            public bool IsActive { get; set; }
+        }
         private void AddDateRangeParameters(SqlCommand cmd, DateTime? startDate, DateTime? endDate)
         {
             cmd.Parameters.AddWithValue(
@@ -493,7 +509,172 @@ namespace DineFlowRestaurantSystem.Services
 
             return order;
         }
-        public void UpdateOrderStatus(int orderId, string newStatus)
+        private void ValidateOrderHasRecipes(SqlConnection conn, SqlTransaction transaction, int orderId)
+        {
+            string query = @"
+                SELECT COUNT(*)
+                FROM OrderItems oi
+                WHERE oi.OrderID = @orderId
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM MenuItemIngredients mii
+                        WHERE mii.MenuItemID = oi.MenuItemID
+                  )";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
+            {
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                int count = Convert.ToInt32(cmd.ExecuteScalar());
+
+                if (count > 0)
+                {
+                    throw new Exception("This order cannot be completed because one or more menu items do not have recipe ingredients assigned.");
+                }
+            }
+        }
+        private List<IngredientUsageRequirement> GetIngredientUsageRequirements(SqlConnection conn, SqlTransaction transaction, int orderId)
+        {
+            List<IngredientUsageRequirement> requirements = new List<IngredientUsageRequirement>();
+
+            string query = @"
+                SELECT
+                    i.IngredientID,
+                    i.IngredientName,
+                    i.Unit,
+                    i.CurrentStock,
+                    i.CostPerUnit,
+                    i.IsActive,
+                    SUM(mii.QuantityRequired * oi.Quantity) AS QuantityNeeded
+                FROM OrderItems oi
+                INNER JOIN MenuItemIngredients mii ON oi.MenuItemID = mii.MenuItemID
+                INNER JOIN Ingredients i WITH (UPDLOCK, ROWLOCK) ON mii.IngredientID = i.IngredientID
+                WHERE oi.OrderID = @orderId
+                GROUP BY
+                    i.IngredientID,
+                    i.IngredientName,
+                    i.Unit,
+                    i.CurrentStock,
+                    i.CostPerUnit,
+                    i.IsActive";
+
+            using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
+            {
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        requirements.Add(new IngredientUsageRequirement
+                        {
+                            IngredientID = Convert.ToInt32(reader["IngredientID"]),
+                            IngredientName = reader["IngredientName"].ToString() ?? "",
+                            Unit = reader["Unit"].ToString() ?? "",
+                            CurrentStock = Convert.ToDecimal(reader["CurrentStock"]),
+                            CostPerUnit = Convert.ToDecimal(reader["CostPerUnit"]),
+                            IsActive = Convert.ToBoolean(reader["IsActive"]),
+                            QuantityNeeded = Convert.ToDecimal(reader["QuantityNeeded"])
+                        });
+                    }
+                }
+            }
+
+            return requirements;
+        }
+        private void DeductIngredientStockForOrder(SqlConnection conn, SqlTransaction transaction, int orderId, int? updatedByUserId)
+        {
+            ValidateOrderHasRecipes(conn, transaction, orderId);
+
+            List<IngredientUsageRequirement> requirements =
+                GetIngredientUsageRequirements(conn, transaction, orderId);
+
+            if (requirements.Count == 0)
+            {
+                throw new Exception("This order cannot be completed because it has no ingredient requirements.");
+            }
+
+            foreach (var requirement in requirements)
+            {
+                if (!requirement.IsActive)
+                {
+                    throw new Exception($"{requirement.IngredientName} is inactive. The order cannot be completed.");
+                }
+
+                if (requirement.CurrentStock < requirement.QuantityNeeded)
+                {
+                    throw new Exception($"{requirement.IngredientName} does not have enough stock to complete this order.");
+                }
+            }
+
+            foreach (var requirement in requirements)
+            {
+                string updateStockQuery = @"
+                    UPDATE Ingredients
+                    SET CurrentStock = CurrentStock - @quantityUsed,
+                        UpdatedAt = GETDATE()
+                    WHERE IngredientID = @ingredientId";
+
+                using (SqlCommand cmd = new SqlCommand(updateStockQuery, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@quantityUsed", requirement.QuantityNeeded);
+                    cmd.Parameters.AddWithValue("@ingredientId", requirement.IngredientID);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                decimal totalCost = requirement.QuantityNeeded * requirement.CostPerUnit;
+
+                string insertTransactionQuery = @"
+                    INSERT INTO StockTransactions
+                    (
+                        IngredientID,
+                        TransactionType,
+                        QuantityChange,
+                        UnitCost,
+                        TotalCost,
+                        Reason,
+                        ReferenceType,
+                        ReferenceID,
+                        CreatedByUserID
+                    )
+                    VALUES
+                    (
+                        @ingredientId,
+                        'Usage',
+                        @quantityChange,
+                        @unitCost,
+                        @totalCost,
+                        @reason,
+                        'Order',
+                        @orderId,
+                        @createdByUserId
+                    )";
+
+                using (SqlCommand cmd = new SqlCommand(insertTransactionQuery, conn, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@ingredientId", requirement.IngredientID);
+                    cmd.Parameters.AddWithValue("@quantityChange", -requirement.QuantityNeeded);
+                    cmd.Parameters.AddWithValue("@unitCost", requirement.CostPerUnit);
+                    cmd.Parameters.AddWithValue("@totalCost", totalCost);
+                    cmd.Parameters.AddWithValue("@reason", $"Used for Order #{orderId}");
+                    cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                    if (updatedByUserId == null || updatedByUserId <= 0)
+                    {
+                        cmd.Parameters.AddWithValue("@createdByUserId", DBNull.Value);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@createdByUserId", updatedByUserId.Value);
+                    }
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateOrderStatus(int orderId, string newStatus, int? updatedByUserId)
         {
             string[] validStatuses = { "Pending", "Preparing", "Completed", "Cancelled" };
 
@@ -545,9 +726,9 @@ namespace DineFlowRestaurantSystem.Services
                             throw new Exception("Cancelled orders cannot be updated.");
                         }
 
-                        if (currentStatus == "Completed" && newStatus == "Cancelled")
+                        if (currentStatus == "Completed" && newStatus != "Completed")
                         {
-                            throw new Exception("Completed orders cannot be cancelled.");
+                            throw new Exception("Completed orders cannot be updated.");
                         }
 
                         string newPaymentStatus = paymentStatus;
@@ -567,6 +748,11 @@ namespace DineFlowRestaurantSystem.Services
                             }
 
                             newPaymentStatus = "Refunded";
+                        }
+
+                        if (newStatus == "Completed" && currentStatus != "Completed")
+                        {
+                            DeductIngredientStockForOrder(conn, transaction, orderId, updatedByUserId);
                         }
 
                         string updateOrderQuery = @"
@@ -593,6 +779,10 @@ namespace DineFlowRestaurantSystem.Services
                     }
                 }
             }
+        }
+        public void UpdateOrderStatus(int orderId, string newStatus)
+        {
+            UpdateOrderStatus(orderId, newStatus, null);
         }
         public List<AdminOrderListItemViewModel> GetKitchenOrders(string? statusFilter = null, string? searchTerm = null)
         {

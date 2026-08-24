@@ -55,6 +55,30 @@ namespace DineFlowRestaurantSystem.Controllers
 
             return View(order);
         }
+
+        [HttpPost]
+        public IActionResult UpdateOrderStatus(int id, string newStatus)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            int updatedByUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _orderService.UpdateOrderStatus(id, newStatus, updatedByUserId);
+                TempData["SuccessMessage"] = "Order status updated successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToAction("OrderDetails", new { id });
+        }
         public IActionResult Reviews(string? searchTerm, int? ratingFilter)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
