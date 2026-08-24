@@ -56,6 +56,22 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link @IsActive("Ingredients")"
+                           asp-controller="Chef"
+                           asp-action="Ingredients">
+                            Ingredients
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link @IsActive("StockTransactions")"
+                           asp-controller="Chef"
+                           asp-action="StockTransactions">
+                            Stock Transactions
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link @IsActive("Reviews")"
                            asp-controller="Chef"
                            asp-action="Reviews">

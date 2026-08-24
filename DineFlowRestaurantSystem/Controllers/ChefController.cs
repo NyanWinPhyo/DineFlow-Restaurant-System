@@ -10,12 +10,18 @@ namespace DineFlowRestaurantSystem.Controllers
         private readonly OrderService _orderService;
         private readonly FeedbackService _feedbackService;
         private readonly MenuService _menuService;
+        private readonly IngredientService _ingredientService;
 
-        public ChefController(OrderService orderService, FeedbackService feedbackService, MenuService menuService)
+        public ChefController(
+            OrderService orderService,
+            FeedbackService feedbackService,
+            MenuService menuService,
+            IngredientService ingredientService)
         {
             _orderService = orderService;
             _feedbackService = feedbackService;
             _menuService = menuService;
+            _ingredientService = ingredientService;
         }
 
         public IActionResult Index(string? statusFilter, string? searchTerm)
@@ -109,6 +115,35 @@ namespace DineFlowRestaurantSystem.Controllers
             var menuItems = _menuService.GetMenuItems(searchTerm);
 
             return View(menuItems);
+        }
+        public IActionResult Ingredients(string? searchTerm)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+            ViewBag.SearchTerm = searchTerm;
+
+            var ingredients = _ingredientService.GetIngredients(searchTerm);
+
+            return View(ingredients);
+        }
+        public IActionResult StockTransactions(int? ingredientId)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Chef"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var transactions = _ingredientService.GetStockTransactions(ingredientId);
+
+            return View(transactions);
         }
 
         [HttpPost]

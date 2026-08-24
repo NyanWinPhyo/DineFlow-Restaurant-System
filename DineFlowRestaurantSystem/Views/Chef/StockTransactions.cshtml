@@ -1,0 +1,80 @@
+﻿@model List<DineFlowRestaurantSystem.ViewModels.StockTransactionListItemViewModel>
+
+@{
+    Layout = "~/Views/Shared/_ChefLayout.cshtml";
+    ViewData["Title"] = "Stock Transactions";
+}
+
+<div class="chef-page-container">
+    <div class="chef-page-header">
+        <div>
+            <h2 class="mb-1">Stock Transactions</h2>
+            <p class="text-muted mb-0">View recent ingredient stock movements.</p>
+        </div>
+
+        <div class="chef-action-bar">
+            <a asp-controller="Chef" asp-action="Ingredients" class="btn btn-outline-secondary">
+                Back to Ingredients
+            </a>
+        </div>
+    </div>
+
+    <div class="card chef-card">
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info mb-0">No stock transactions found.</div>
+            }
+            else
+            {
+                <div class="table-responsive chef-table-scroll">
+                    <table class="table table-hover align-middle chef-stock-transactions-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Ingredient</th>
+                                <th>Type</th>
+                                <th>Quantity Change</th>
+                                <th>Reason</th>
+                                <th>Created By</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var transaction in Model)
+                            {
+                                <tr>
+                                    <td>@transaction.StockTransactionID</td>
+                                    <td>@transaction.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@transaction.IngredientName</td>
+                                    <td>
+                                        @if (transaction.TransactionType == "Restock")
+                                        {
+                                            <span class="badge bg-success">Restock</span>
+                                        }
+                                        else if (transaction.TransactionType == "Usage")
+                                        {
+                                            <span class="badge bg-primary">Usage</span>
+                                        }
+                                        else if (transaction.TransactionType == "Waste")
+                                        {
+                                            <span class="badge bg-danger">Waste</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@transaction.TransactionType</span>
+                                        }
+                                    </td>
+                                    <td>@transaction.QuantityChange.ToString("N2") @transaction.Unit</td>
+                                    <td>@(transaction.Reason ?? "-")</td>
+                                    <td>@(transaction.CreatedByUsername ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
