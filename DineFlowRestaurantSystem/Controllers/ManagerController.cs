@@ -41,7 +41,9 @@ namespace DineFlowRestaurantSystem.Controllers
                 TotalCategories = _menuService.GetTotalCategoryCount(),
                 PendingOrders = _orderService.GetOrderCountByStatus("Pending"),
                 PreparingOrders = _orderService.GetOrderCountByStatus("Preparing"),
-                PendingReviews = _feedbackService.GetPendingReviewCount()
+                PendingReviews = _feedbackService.GetPendingReviewCount(),
+                LowStockIngredientCount = _ingredientService.GetLowStockIngredientCount(),
+                LowStockIngredients = _ingredientService.GetLowStockIngredients(5)
             };
 
             return View(dashboard);

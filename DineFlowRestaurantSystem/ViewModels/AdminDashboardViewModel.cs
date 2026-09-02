@@ -14,6 +14,10 @@
 
         public decimal TotalSales { get; set; }
 
+        public int LowStockIngredientCount { get; set; }
+
+        public List<IngredientListItemViewModel> LowStockIngredients { get; set; } = new();
+
         public string ActiveRole { get; set; } = string.Empty;
     }
 }

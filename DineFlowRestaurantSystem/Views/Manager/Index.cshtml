@@ -70,4 +70,59 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card manager-card">
+            <div class="card-body">
+                <h6 class="text-muted">Low Stock Ingredients</h6>
+                <h3 class="mb-0">@Model.LowStockIngredientCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card manager-card mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Low Stock Alerts</h5>
+            <a asp-controller="Manager" asp-action="Ingredients" class="btn btn-sm btn-outline-primary">
+                View Ingredients
+            </a>
+        </div>
+
+        <div class="card-body">
+            @if (Model.LowStockIngredients.Count == 0)
+            {
+                <div class="alert alert-success mb-0">
+                    All active ingredients are above reorder level.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ingredient</th>
+                                <th>Current Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ingredient in Model.LowStockIngredients)
+                            {
+                                <tr>
+                                    <td>@ingredient.IngredientName</td>
+                                    <td>@ingredient.CurrentStock.ToString("N2") @ingredient.Unit</td>
+                                    <td>@ingredient.ReorderLevel.ToString("N2") @ingredient.Unit</td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">Low Stock</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
 </div>

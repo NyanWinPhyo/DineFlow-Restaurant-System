@@ -71,6 +71,15 @@ body {
     border-radius: 10px;
 }
 
+.dashboard-card,
+.manager-card,
+.chef-card {
+    height: auto;
+}
+
+.dashboard-card .card-body {
+    min-height: 110px;
+}
 
 /* =========================================================
    Admin Layout

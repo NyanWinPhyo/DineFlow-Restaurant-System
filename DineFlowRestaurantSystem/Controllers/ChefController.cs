@@ -35,6 +35,8 @@ namespace DineFlowRestaurantSystem.Controllers
             ViewBag.Username = SessionHelper.GetUsername(HttpContext);
             ViewBag.StatusFilter = statusFilter;
             ViewBag.SearchTerm = searchTerm;
+            ViewBag.LowStockIngredientCount = _ingredientService.GetLowStockIngredientCount();
+            ViewBag.LowStockIngredients = _ingredientService.GetLowStockIngredients(5);
 
             var orders = _orderService.GetKitchenOrders(statusFilter, searchTerm);
 

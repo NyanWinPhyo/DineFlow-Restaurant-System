@@ -13,5 +13,9 @@
         public int PreparingOrders { get; set; }
 
         public int PendingReviews { get; set; }
+
+        public int LowStockIngredientCount { get; set; }
+
+        public List<IngredientListItemViewModel> LowStockIngredients { get; set; } = new();
     }
 }

@@ -40,6 +40,8 @@ namespace DineFlowRestaurantSystem.Controllers
                 TotalCategories = _menuService.GetTotalCategoryCount(),
                 TotalOrders = _orderService.GetTotalOrderCount(),
                 TotalSales = _orderService.GetCompletedPaidSalesTotal(),
+                LowStockIngredientCount = _ingredientService.GetLowStockIngredientCount(),
+                LowStockIngredients = _ingredientService.GetLowStockIngredients(5),
                 ActiveRole = SessionHelper.GetRole(HttpContext)
             };
 

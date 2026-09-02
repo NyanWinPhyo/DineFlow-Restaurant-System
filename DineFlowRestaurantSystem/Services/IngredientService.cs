@@ -607,5 +607,71 @@ namespace DineFlowRestaurantSystem.Services
                 cmd.ExecuteNonQuery();
             }
         }
+        public int GetLowStockIngredientCount()
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT COUNT(*)
+                FROM Ingredients
+                WHERE IsActive = 1
+                  AND CurrentStock <= ReorderLevel";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+        public List<IngredientListItemViewModel> GetLowStockIngredients(int limit = 5)
+        {
+            List<IngredientListItemViewModel> ingredients = new();
+
+            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT TOP (@limit)
+                    IngredientID,
+                    IngredientName,
+                    Unit,
+                    CurrentStock,
+                    ReorderLevel,
+                    CostPerUnit,
+                    IsActive,
+                    CreatedAt
+                FROM Ingredients
+                WHERE IsActive = 1
+                  AND CurrentStock <= ReorderLevel
+                ORDER BY CurrentStock ASC, IngredientName";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@limit", limit);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ingredients.Add(new IngredientListItemViewModel
+                        {
+                            IngredientID = Convert.ToInt32(reader["IngredientID"]),
+                            IngredientName = reader["IngredientName"].ToString() ?? "",
+                            Unit = reader["Unit"].ToString() ?? "",
+                            CurrentStock = Convert.ToDecimal(reader["CurrentStock"]),
+                            ReorderLevel = Convert.ToDecimal(reader["ReorderLevel"]),
+                            CostPerUnit = Convert.ToDecimal(reader["CostPerUnit"]),
+                            IsActive = Convert.ToBoolean(reader["IsActive"]),
+                            CreatedAt = Convert.ToDateTime(reader["CreatedAt"])
+                        });
+                    }
+                }
+            }
+
+            return ingredients;
+        }
     }
 }
