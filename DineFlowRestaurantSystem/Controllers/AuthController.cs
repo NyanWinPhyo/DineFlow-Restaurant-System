@@ -31,7 +31,7 @@ namespace DineFlowRestaurantSystem.Controllers
 
             if (user == null)
             {
-                ViewBag.ErrorMessage = "Invalid login ID or password.";
+                ModelState.AddModelError("", "Invalid login ID or password.");
                 return View(model);
             }
 
@@ -40,14 +40,24 @@ namespace DineFlowRestaurantSystem.Controllers
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetString("Role", user.Role);
 
-            return user.Role switch
+            if (user.Role == "Admin")
             {
-                "Admin" => RedirectToAction("Index", "Admin"),
-                "Manager" => RedirectToAction("Index", "Manager"),
-                "Chef" => RedirectToAction("Index", "Chef"),
-                "Customer" => RedirectToAction("Index", "Customer"),
-                _ => RedirectToAction("Index", "Home")
-            };
+                return RedirectToAction("Index", "Admin");
+            }
+            else if (user.Role == "Manager")
+            {
+                return RedirectToAction("Index", "Manager");
+            }
+            else if (user.Role == "Chef")
+            {
+                return RedirectToAction("Index", "Chef");
+            }
+            else if (user.Role == "Customer")
+            {
+                return RedirectToAction("Index", "Customer");
+            }
+
+            return RedirectToAction("AccessDenied", "Auth");
         }
         public IActionResult AccessDenied()
         {
