@@ -1,231 +1,308 @@
 # DineFlow Restaurant System
 
-DineFlow is a restaurant management system built with ASP.NET Core MVC and SQL Server.  
-The project is designed as a full-stack portfolio project that demonstrates role-based access, user management, menu management, customer ordering, kitchen order handling, customer feedback, and restaurant operation tracking.
+DineFlow is a full-stack restaurant management web application built with ASP.NET Core MVC and SQL Server.
+
+The system supports multiple restaurant roles — Admin, Manager, Chef, and Customer — and connects customer ordering, kitchen operations, menu management, ingredient inventory, stock tracking, sales reporting, and customer feedback into a single workflow.
+
+DineFlow originally began as a rebuild of an earlier academic C# Windows Forms restaurant management project. It was later expanded independently into a more complete ASP.NET Core MVC application with a stronger focus on realistic restaurant operations and interconnected business logic.
+
+---
 
 ## Tech Stack
 
 - ASP.NET Core MVC
 - C#
+- .NET
 - SQL Server
 - ADO.NET
+- Razor Views
 - Bootstrap
+- HTML / CSS / JavaScript
 - Visual Studio
 
-## Current Features
+---
 
-### Authentication
+## Main Features
+
+### Authentication and Role Management
+
 - Login system
-- Role-based redirection
-- Session-based access control
-- Access denied handling for unauthorized roles
+- Session-based authentication
+- Role-based access control
+- Automatic role-based redirection
+- Access denied handling
+- Separate interfaces for:
+  - Admin
+  - Manager
+  - Chef
+  - Customer
 
-### Admin Module
-- Admin dashboard
-- Dynamic dashboard statistics
-  - Total users
-  - Total menu items
-  - Available menu items
-  - Total menu categories
-- User management
-- Search users
-- Add new users
-- Edit user details
-- Optional password update during edit
-- Activate and deactivate users
-- Restricted hard delete for mistaken/test accounts
-- Customer wallet handling
-- Admin profile update
+---
 
-### Admin Order Management
+## Admin Module
+
+### Dashboard
+
+- Total users
+- Total menu items
+- Available menu items
+- Total menu categories
+- Total orders
+- Completed paid sales total
+- Active role display
+- Low-stock ingredient count
+- Low-stock ingredient alerts
+
+### User Management
+
+- View and search users
+- Add users
+- Edit users
+- Optional password updates
+- Activate / deactivate accounts
+- Restricted permanent deletion
+- Customer wallet management
+- Admin profile management
+
+### Order Management
+
 - View all customer orders
-- Search orders by order ID, customer name, or login ID
-- Filter orders by status
-- View order details
+- Search orders
+- Filter by order status
+- View detailed order information
 - Update order status
-- Cancel orders with automatic customer wallet refund
+- Cancel eligible orders
+- Automatic customer wallet refund for cancelled paid orders
 
-### Admin Feedback Management
-- View all customer reviews
-- Search reviews by order ID, customer, or comment
-- Filter reviews by rating
-- Filter reviews by reviewed/unreviewed status
+### Feedback Management
+
+- View customer reviews
+- Search reviews
+- Filter by rating
+- Filter reviewed / unreviewed feedback
 - View review details
-- Add management response
+- Add or edit management responses
 - Mark feedback as reviewed
 
-### Menu Management
-- Menu category management
-- Add menu categories
-- Edit menu categories
-- Activate and deactivate categories
-- Restricted hard delete for unused categories
-- Menu item management
-- Add menu items
-- Edit menu items
-- Mark menu items as available/unavailable
-- Restricted hard delete for unused menu items
-- Search menu items
-- Duplicate menu item validation
-- Food image upload, replacement, and removal for menu items
+---
 
-### Customer Module
-- Customer menu browsing page
-- Menu items displayed by category
-- Food image display
-- Search available menu items
-- Hidden unavailable menu items
-- Hidden items from inactive categories
-- Customer cart using session storage
-- Add items to cart
-- Update cart quantity
-- Remove items from cart
-- Clear cart
-- Wallet balance display
-- Place orders using customer wallet balance
-- View order history
-- View order details and order status
-- Leave reviews for completed orders
-- One review per completed order
+## Manager Module
 
-### Chef Module
-- Kitchen dashboard
-- View pending and preparing orders
-- Search and filter kitchen orders
-- View kitchen-focused order details
-- Mark orders as preparing
-- Mark orders as completed
-- Read customer reviews
-- Search/filter reviews
+### Dashboard
+
+- Total menu items
+- Available menu items
+- Total categories
+- Pending orders
+- Preparing orders
+- Pending reviews
+- Low-stock ingredient count
+- Low-stock ingredient alerts
+
+### Restaurant Operations
+
+Managers can:
+
+- Manage orders
+- Update order statuses
 - Manage menu items
+- Manage menu categories
+- Manage ingredients
+- Restock ingredients
+- Record stock adjustments
+- Record ingredient waste
+- Manage menu item recipes
+- View stock transaction history
+- Respond to customer feedback
+- View sales reports
+
+Business rules are shared with the Admin workflow where appropriate.
+
+---
+
+## Chef Module
+
+### Kitchen Dashboard
+
+- View pending and preparing orders
+- Search kitchen orders
+- Filter orders by status
+- View kitchen-focused order details
+- Move orders from Pending → Preparing → Completed
+
+Completing an order automatically deducts the required ingredient quantities from inventory.
+
+### Menu Management
+
+- View menu items
 - Add menu items
 - Edit menu item details
-- Upload, change, and remove food images
-- Mark menu items available/unavailable
-- Price editing restricted from chef edit form
+- Upload / replace / remove food images
+- Mark menu items as available or unavailable
+- Menu price editing restricted for Chef accounts
 
-### Manager Module
-- Manager dashboard foundation
-- Dynamic operation statistics
-  - Total menu items
-  - Available menu items
-  - Total categories
-  - Pending orders
-  - Preparing orders
-  - Pending reviews
+### Inventory Visibility
 
-## Database
+Chefs can:
 
-Current database tables:
+- View ingredient stock levels
+- View low-stock alerts
+- View stock transaction history
 
-- Users
-- Customers
-- MenuCategories
-- MenuItems
-- Orders
-- OrderItems
-- Feedback
+Inventory modification remains restricted to management roles.
 
-### Sales Reports
-- Admin sales report
-- Manager sales report
-- Date range filtering
-- Total sales from completed paid orders
-- Completed order count
-- Cancelled/refunded order tracking
-- Total items sold
-- Average order value
-- Top-selling menu items
-- Recent order report
+### Reviews
 
-### UI and Layout Improvements
-- Added dedicated layouts for Admin, Manager, Chef, Customer, and Login pages
-- Removed default ASP.NET navigation from role pages
-- Improved sidebar and navbar styling
-- Added active navigation highlights
-- Improved responsive table behavior
-- Fixed table shifting when action buttons appear
-- Added Malaysian Ringgit currency formatting
-- Added sales report date validation
+- Read customer reviews
+- Search and filter reviews
 
-## Planned Features
+---
 
-### Manager Module Expansion
-- Manager order management
-- Manager menu management
-- Manager feedback handling
-- Manager sales/report dashboard
+## Customer Module
 
-### Sales and Reports
-- Total sales report
-- Order history report
-- Menu item performance report
-- Customer activity report
-- Revenue summary dashboard
+### Menu
 
-### Inventory System
-- Ingredient tracking
-- Ingredient stock levels
-- Menu item ingredient requirements
-- Automatic menu availability based on ingredient stock
-- Low-stock warnings
-- Ingredient restock records
+- Browse available menu items
+- Menu items grouped by category
+- Food image display
+- Search menu items
+- Hidden unavailable items
+- Hidden items from inactive categories
+- Ingredient-aware menu availability
 
-### Restaurant Finance Tracker
-- Restaurant wallet/balance tracking
-- Order income tracking
-- Ingredient restock cost tracking
-- Inflow/outflow transaction history
-- Net revenue calculation
+A menu item is only shown to customers when:
 
-### Reservation System
-- Customer reservation requests
-- Admin/Manager reservation management
-- Table assignment
-- Reservation status tracking
+- The menu item is active
+- Its category is active
+- A recipe has been assigned
+- All required ingredients are active
+- Sufficient ingredient stock exists
 
-### Review System Improvements
-- Customer-visible management responses
-- Admin/Manager review response history
-- Review analytics by rating
-- Possible menu-item-specific feedback
+### Cart
 
-### UI Improvements
-- Shared layouts for Customer, Chef, and Manager pages
-- Better navigation
-- Improved status badge colors
-- Dashboard charts
-- Responsive layout polish
+- Session-based shopping cart
+- Select quantity before adding to cart
+- Increase / decrease quantity
+- Remove individual items
+- Clear cart
+- Live stock-aware quantity validation
+- Combined ingredient validation across the full cart
 
-## Project Status
+Exact internal stock quantities are not exposed to customers.
 
-This project is currently under active development.
+### Ordering
 
-Completed so far:
+- Customer wallet balance
+- Place orders using wallet funds
+- Automatic wallet deduction
+- Order confirmation
+- Order history
+- Order detail view
+- Order status tracking
 
-- Initial ASP.NET Core MVC setup
-- SQL Server database connection
-- Authentication and role routing
-- Admin user management
-- Admin profile management
-- Admin order management
-- Admin feedback management
-- Menu item and category management
-- Food image upload for menu items
-- Customer menu browsing page
-- Customer cart system
-- Customer order placement
-- Customer wallet payment deduction
-- Customer order tracking
-- Customer review system
-- Chef kitchen order dashboard
-- Chef read-only review page
-- Chef menu item management
-- Manager dashboard foundation
+### Reviews
 
-Next development focus:
+- Leave reviews for completed orders
+- One review per completed order
+- View management responses
 
-- Manager order management
-- Manager menu and feedback management
-- Sales report and dashboard analytics
-- Customer-facing review response display
+---
+
+## Menu Management
+
+### Categories
+
+- Add categories
+- Edit categories
+- Activate / deactivate categories
+- Prevent invalid category deactivation
+- Restricted permanent deletion for unused categories
+
+### Menu Items
+
+- Add menu items
+- Edit menu items
+- Search menu items
+- Set availability
+- Duplicate-name validation
+- Upload food images
+- Replace food images
+- Remove food images
+- Restricted permanent deletion for items with existing records
+
+Supported image formats:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+---
+
+## Inventory and Recipe System
+
+### Ingredients
+
+Each ingredient stores:
+
+- Ingredient name
+- Unit
+- Current stock
+- Reorder level
+- Cost per unit
+- Active status
+
+Supported example units include:
+
+- g
+- kg
+- ml
+- L
+- pcs
+
+### Restocking
+
+Restocking:
+
+- Increases ingredient stock
+- Records unit cost
+- Calculates total cost
+- Creates a stock transaction
+- Records the responsible user
+
+### Stock Adjustment
+
+Management users can record stock corrections.
+
+Adjustments can:
+
+- Increase stock
+- Decrease stock
+- Require a reason
+- Prevent stock from falling below zero
+
+### Waste Tracking
+
+Ingredient waste can be recorded separately from normal adjustments.
+
+Waste:
+
+- Reduces stock
+- Requires a reason
+- Records the associated cost
+- Creates a `Waste` stock transaction
+
+### Menu Item Recipes
+
+Menu items can be linked to multiple ingredients.
+
+Each recipe defines the quantity required for one serving.
+
+Example:
+
+```text
+Chicken Chop
+├── Chicken Breast
+├── Potato
+├── Black Pepper Sauce
+└── Cooking Oil
