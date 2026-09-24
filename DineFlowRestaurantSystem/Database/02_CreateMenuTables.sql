@@ -20,74 +20,15 @@ CREATE TABLE MenuItems (
     CreatedByUserID INT NULL,
     CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
 
-    FOREIGN KEY (CategoryID) REFERENCES MenuCategories(CategoryID),
-    FOREIGN KEY (CreatedByUserID) REFERENCES Users(UserID)
+    CONSTRAINT FK_MenuItems_MenuCategories
+        FOREIGN KEY (CategoryID)
+        REFERENCES MenuCategories(CategoryID),
+
+    CONSTRAINT FK_MenuItems_Users
+        FOREIGN KEY (CreatedByUserID)
+        REFERENCES Users(UserID),
+
+    CONSTRAINT UQ_MenuItems_Category_ItemName
+        UNIQUE (CategoryID, ItemName)
 );
 GO
-
-INSERT INTO MenuCategories (CategoryName)
-VALUES 
-('Main Course'),
-('Drinks'),
-('Desserts'),
-('Side Dishes');
-GO
-
-IF NOT EXISTS (
-    SELECT 1 
-    FROM MenuItems 
-    WHERE CategoryID = 1 
-      AND ItemName = 'Chicken Chop'
-)
-BEGIN
-    INSERT INTO MenuItems 
-    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-    VALUES
-(1, 'Chicken Chop', 'Grilled chicken served with fries and black pepper sauce.', 18.90, 1, 1);
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 
-    FROM MenuItems 
-    WHERE CategoryID = 1 
-      AND ItemName = 'Chicken Chop'
-)
-BEGIN
-    INSERT INTO MenuItems 
-    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-    VALUES
-(1, 'Fried Rice', 'Classic fried rice with egg and vegetables.', 9.90, 1, 1);
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 
-    FROM MenuItems 
-    WHERE CategoryID = 1 
-      AND ItemName = 'Chicken Chop'
-)
-BEGIN
-    INSERT INTO MenuItems 
-    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-    VALUES
-(2, 'Iced Lemon Tea', 'Cold lemon tea drink.', 4.50, 1, 1);
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 
-    FROM MenuItems 
-    WHERE CategoryID = 1 
-      AND ItemName = 'Chicken Chop'
-)
-BEGIN
-    INSERT INTO MenuItems 
-    (CategoryID, ItemName, Description, Price, IsAvailable, CreatedByUserID)
-    VALUES
-(3, 'Chocolate Cake', 'Slice of chocolate cake.', 7.90, 1, 1);
-END
-GO
-
-SELECT * FROM MenuCategories;
-SELECT * FROM MenuItems;
