@@ -57,6 +57,10 @@
                                         {
                                             <span class="badge bg-primary">Usage</span>
                                         }
+                                        else if (transaction.TransactionType == "Adjustment")
+                                        {
+                                            <span class="badge bg-warning text-dark">Adjustment</span>
+                                        }
                                         else if (transaction.TransactionType == "Waste")
                                         {
                                             <span class="badge bg-danger">Waste</span>

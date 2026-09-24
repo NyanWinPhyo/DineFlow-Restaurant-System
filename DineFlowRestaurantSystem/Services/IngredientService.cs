@@ -277,6 +277,231 @@ namespace DineFlowRestaurantSystem.Services
             return null;
         }
 
+        public StockAdjustmentViewModel? GetStockAdjustmentModel(int ingredientId)
+        {
+            string connectionString =
+                _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            string query = @"
+                SELECT
+                    IngredientID,
+                    IngredientName,
+                    Unit,
+                    CurrentStock
+                FROM Ingredients
+                WHERE IngredientID = @ingredientId";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@ingredientId", ingredientId);
+
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new StockAdjustmentViewModel
+                        {
+                            IngredientID = Convert.ToInt32(reader["IngredientID"]),
+                            IngredientName = reader["IngredientName"].ToString() ?? "",
+                            Unit = reader["Unit"].ToString() ?? "",
+                            CurrentStock = Convert.ToDecimal(reader["CurrentStock"]),
+                            TransactionType = "Adjustment",
+                            AdjustmentDirection = "Decrease"
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public void AdjustStock(
+    StockAdjustmentViewModel model,
+    int createdByUserId)
+        {
+            string[] validTypes = { "Adjustment", "Waste" };
+
+            if (!validTypes.Contains(model.TransactionType))
+            {
+                throw new Exception("Invalid stock transaction type.");
+            }
+
+            if (model.Quantity <= 0)
+            {
+                throw new Exception("Quantity must be greater than 0.");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Reason))
+            {
+                throw new Exception("A reason is required.");
+            }
+
+            decimal quantityChange;
+
+            if (model.TransactionType == "Waste")
+            {
+                quantityChange = -model.Quantity;
+            }
+            else
+            {
+                if (model.AdjustmentDirection != "Increase" &&
+                    model.AdjustmentDirection != "Decrease")
+                {
+                    throw new Exception("Please select an adjustment direction.");
+                }
+
+                quantityChange =
+                    model.AdjustmentDirection == "Increase"
+                        ? model.Quantity
+                        : -model.Quantity;
+            }
+
+            string connectionString =
+                _configuration.GetConnectionString("DefaultConnection") ?? "";
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                using (SqlTransaction transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        decimal currentStock;
+                        decimal unitCost;
+
+                        string stockQuery = @"
+                            SELECT CurrentStock, CostPerUnit
+                            FROM Ingredients WITH (UPDLOCK, ROWLOCK)
+                            WHERE IngredientID = @ingredientId";
+
+                        using (SqlCommand cmd =
+                            new SqlCommand(stockQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue(
+                                "@ingredientId",
+                                model.IngredientID);
+
+                            using (SqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                {
+                                    throw new Exception("Ingredient not found.");
+                                }
+
+                                currentStock =
+                                    Convert.ToDecimal(reader["CurrentStock"]);
+
+                                unitCost =
+                                    Convert.ToDecimal(reader["CostPerUnit"]);
+                            }
+                        }
+
+                        decimal newStock = currentStock + quantityChange;
+
+                        if (newStock < 0)
+                        {
+                            throw new Exception(
+                                "This transaction would reduce stock below zero.");
+                        }
+
+                        string updateQuery = @"
+                            UPDATE Ingredients
+                            SET CurrentStock = CurrentStock + @quantityChange,
+                                UpdatedAt = GETDATE()
+                            WHERE IngredientID = @ingredientId";
+
+                        using (SqlCommand cmd =
+                            new SqlCommand(updateQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue(
+                                "@quantityChange",
+                                quantityChange);
+
+                            cmd.Parameters.AddWithValue(
+                                "@ingredientId",
+                                model.IngredientID);
+
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        decimal totalCost =
+                            Math.Abs(quantityChange) * unitCost;
+
+                        string transactionQuery = @"
+                            INSERT INTO StockTransactions
+                            (
+                                IngredientID,
+                                TransactionType,
+                                QuantityChange,
+                                UnitCost,
+                                TotalCost,
+                                Reason,
+                                ReferenceType,
+                                ReferenceID,
+                                CreatedByUserID
+                            )
+                            VALUES
+                            (
+                                @ingredientId,
+                                @transactionType,
+                                @quantityChange,
+                                @unitCost,
+                                @totalCost,
+                                @reason,
+                                NULL,
+                                NULL,
+                                @createdByUserId
+                            )";
+
+                        using (SqlCommand cmd =
+                            new SqlCommand(transactionQuery, conn, transaction))
+                        {
+                            cmd.Parameters.AddWithValue(
+                                "@ingredientId",
+                                model.IngredientID);
+
+                            cmd.Parameters.AddWithValue(
+                                "@transactionType",
+                                model.TransactionType);
+
+                            cmd.Parameters.AddWithValue(
+                                "@quantityChange",
+                                quantityChange);
+
+                            cmd.Parameters.AddWithValue(
+                                "@unitCost",
+                                unitCost);
+
+                            cmd.Parameters.AddWithValue(
+                                "@totalCost",
+                                totalCost);
+
+                            cmd.Parameters.AddWithValue(
+                                "@reason",
+                                model.Reason.Trim());
+
+                            cmd.Parameters.AddWithValue(
+                                "@createdByUserId",
+                                createdByUserId);
+
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
         public void RestockIngredient(RestockIngredientViewModel model, int createdByUserId)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";

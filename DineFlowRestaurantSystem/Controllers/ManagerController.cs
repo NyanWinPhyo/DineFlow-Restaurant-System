@@ -648,6 +648,85 @@ namespace DineFlowRestaurantSystem.Controllers
             }
         }
 
+        [HttpGet]
+        public IActionResult AdjustStock(int id)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            var model = _ingredientService.GetStockAdjustmentModel(id);
+
+            if (model == null)
+            {
+                TempData["ErrorMessage"] = "Ingredient not found.";
+                return RedirectToAction("Ingredients");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public IActionResult AdjustStock(StockAdjustmentViewModel model)
+        {
+            if (!SessionHelper.IsLoggedIn(HttpContext))
+                return RedirectToAction("Login", "Auth");
+
+            if (!SessionHelper.HasRole(HttpContext, "Manager"))
+                return RedirectToAction("AccessDenied", "Auth");
+
+            ViewBag.Username = SessionHelper.GetUsername(HttpContext);
+
+            if (!ModelState.IsValid)
+            {
+                var original =
+                    _ingredientService.GetStockAdjustmentModel(model.IngredientID);
+
+                if (original != null)
+                {
+                    model.IngredientName = original.IngredientName;
+                    model.Unit = original.Unit;
+                    model.CurrentStock = original.CurrentStock;
+                }
+
+                return View(model);
+            }
+
+            int currentUserId =
+                HttpContext.Session.GetInt32("UserID") ?? 0;
+
+            try
+            {
+                _ingredientService.AdjustStock(model, currentUserId);
+
+                TempData["SuccessMessage"] =
+                    model.TransactionType == "Waste"
+                        ? "Waste recorded successfully."
+                        : "Stock adjustment recorded successfully.";
+
+                return RedirectToAction("Ingredients");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+
+                var original =
+                    _ingredientService.GetStockAdjustmentModel(model.IngredientID);
+
+                if (original != null)
+                {
+                    model.IngredientName = original.IngredientName;
+                    model.Unit = original.Unit;
+                    model.CurrentStock = original.CurrentStock;
+                }
+
+                return View(model);
+            }
+        }
         public IActionResult StockTransactions(int? ingredientId)
         {
             if (!SessionHelper.IsLoggedIn(HttpContext))
@@ -797,6 +876,14 @@ namespace DineFlowRestaurantSystem.Controllers
 
             if (!SessionHelper.HasRole(HttpContext, "Manager"))
                 return RedirectToAction("AccessDenied", "Auth");
+
+            if (!isActive && _menuService.CategoryHasAvailableMenuItems(id))
+            {
+                TempData["ErrorMessage"] =
+                    "This category cannot be deactivated while it still has available menu items.";
+
+                return RedirectToAction("MenuCategories");
+            }
 
             try
             {

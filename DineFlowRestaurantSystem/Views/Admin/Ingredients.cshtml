@@ -106,6 +106,13 @@
                                         </a>
 
                                         <a asp-controller="Admin"
+                                           asp-action="AdjustStock"
+                                           asp-route-id="@ingredient.IngredientID"
+                                           class="btn btn-sm btn-outline-warning">
+                                            Adjust
+                                        </a>
+
+                                        <a asp-controller="Admin"
                                            asp-action="RestockIngredient"
                                            asp-route-id="@ingredient.IngredientID"
                                            class="btn btn-sm btn-outline-success">
